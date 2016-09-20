@@ -18,7 +18,6 @@ Imports:
     knitr,
     lubridate,
     plotly,
-    recovery.plan.overview,
     rmdformats,
     stringr
 
