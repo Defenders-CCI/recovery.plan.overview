@@ -1,7 +1,7 @@
 Package: recovery.plan.overview
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
+Title: Wrapper for ESA Recovery Plan Analysis Vignette
+Version: 1.0.0
 Author: Jacob Malcom
 Maintainer: Jacob Malcom <jmalcom@defenders.org>
 Description: An R package wrapper for a vignette analyzing data on ESA recovery
