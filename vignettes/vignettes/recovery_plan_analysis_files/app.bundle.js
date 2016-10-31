@@ -1,4 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<svg width=\"16px\" height=\"16px\" viewBox=\"0 0 16 16\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n    <!-- Generator: Sketch 39.1 (31720) - http://www.bohemiancoding.com/sketch -->\n    <defs/>\n    <g id=\"Page-1\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <g id=\"Artboard\" fill=\"#D00032\">\n            <g id=\"Group\">\n                <path d=\"M0,8 C0,12.418278 3.581722,16 8,16 C12.418278,16 16,12.418278 16,8 C16,4.89580324 14.2154684,2.11256098 11.4682644,0.789110134 L10.6002482,2.59092808 C12.661769,3.58405472 14,5.6712248 14,8 C14,11.3137085 11.3137085,14 8,14 C4.6862915,14 2,11.3137085 2,8 C2,5.65296151 3.35941993,3.55225774 5.44569583,2.56903563 L4.59307587,0.759881355 C1.81273067,2.07020511 0,4.87140735 0,8 Z\" id=\"Oval\"/>\n                <polygon id=\"Combined-Shape\" points=\"7 8.58578644 7 0 9 0 9 8.58578644 10.2928932 7.29289322 11 6.58578644 12.4142136 8 11.7071068 8.70710678 8.70710678 11.7071068 8 12.4142136 7.64644661 12.0606602 7.29289322 11.7071068 4.29289322 8.70710678 3.58578644 8 5 6.58578644 5.70710678 7.29289322\"/>\n            </g>\n        </g>\n    </g>\n</svg>\n";
+
+},{}],2:[function(require,module,exports){
 'use strict';
 
 annotationMapper.$inject = ["$rootScope", "annotationUI", "store"];
@@ -67,7 +70,7 @@ function annotationMapper($rootScope, annotationUI, store) {
 
 module.exports = annotationMapper;
 
-},{"./events":50,"angular":"angular"}],2:[function(require,module,exports){
+},{"./events":50,"angular":"angular"}],3:[function(require,module,exports){
 'use strict';
 
 /**
@@ -237,301 +240,7 @@ module.exports = {
   location: location,
 };
 
-},{}],3:[function(require,module,exports){
-var AnnotationSync, extend,
-  slice = [].slice;
-
-extend = require('extend');
-
-module.exports = AnnotationSync = (function() {
-  AnnotationSync.prototype.options = {
-    formatter: function(annotation) {
-      return annotation;
-    },
-    parser: function(annotation) {
-      return annotation;
-    },
-    merge: function(local, remote) {
-      var k, v;
-      for (k in remote) {
-        v = remote[k];
-        local[k] = v;
-      }
-      return local;
-    },
-    emit: function() {
-      var args, event;
-      event = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
-      throw new Error('options.emit unspecified for AnnotationSync.');
-    },
-    on: function(event, handler) {
-      throw new Error('options.on unspecified for AnnotationSync.');
-    }
-  };
-
-  AnnotationSync.prototype.cache = null;
-
-  function AnnotationSync(bridge, options) {
-    var event, func, handler, method, onConnect, ref, ref1;
-    this.bridge = bridge;
-    this.options = extend(true, {}, this.options, options);
-    this.cache = {};
-    this._on = this.options.on;
-    this._emit = this.options.emit;
-    ref = this._eventListeners;
-    for (event in ref) {
-      handler = ref[event];
-      this._on(event, handler.bind(this));
-    }
-    ref1 = this._channelListeners;
-    for (method in ref1) {
-      func = ref1[method];
-      this.bridge.on(method, func.bind(this));
-    }
-    onConnect = (function(_this) {
-      return function(channel) {
-        return _this._syncCache(channel);
-      };
-    })(this);
-    this.bridge.onConnect(onConnect);
-  }
-
-  AnnotationSync.prototype.sync = function(annotations) {
-    var a;
-    annotations = (function() {
-      var i, len, results1;
-      results1 = [];
-      for (i = 0, len = annotations.length; i < len; i++) {
-        a = annotations[i];
-        results1.push(this._format(a));
-      }
-      return results1;
-    }).call(this);
-    this.bridge.call('sync', annotations, (function(_this) {
-      return function(err, annotations) {
-        var i, len, results1;
-        if (annotations == null) {
-          annotations = [];
-        }
-        results1 = [];
-        for (i = 0, len = annotations.length; i < len; i++) {
-          a = annotations[i];
-          results1.push(_this._parse(a));
-        }
-        return results1;
-      };
-    })(this));
-    return this;
-  };
-
-  AnnotationSync.prototype._channelListeners = {
-    'beforeCreateAnnotation': function(body, cb) {
-      var annotation;
-      annotation = this._parse(body);
-      delete this.cache[annotation.$$tag];
-      this._emit('beforeAnnotationCreated', annotation);
-      this.cache[annotation.$$tag] = annotation;
-      return cb(null, this._format(annotation));
-    },
-    'createAnnotation': function(body, cb) {
-      var annotation;
-      annotation = this._parse(body);
-      delete this.cache[annotation.$$tag];
-      this._emit('annotationCreated', annotation);
-      this.cache[annotation.$$tag] = annotation;
-      return cb(null, this._format(annotation));
-    },
-    'updateAnnotation': function(body, cb) {
-      var annotation;
-      annotation = this._parse(body);
-      delete this.cache[annotation.$$tag];
-      this._emit('beforeAnnotationUpdated', annotation);
-      this._emit('annotationUpdated', annotation);
-      this.cache[annotation.$$tag] = annotation;
-      return cb(null, this._format(annotation));
-    },
-    'deleteAnnotation': function(body, cb) {
-      var annotation;
-      annotation = this._parse(body);
-      delete this.cache[annotation.$$tag];
-      this._emit('annotationDeleted', annotation);
-      return cb(null, this._format(annotation));
-    },
-    'loadAnnotations': function(bodies, cb) {
-      var a, annotations;
-      annotations = (function() {
-        var i, len, results1;
-        results1 = [];
-        for (i = 0, len = bodies.length; i < len; i++) {
-          a = bodies[i];
-          results1.push(this._parse(a));
-        }
-        return results1;
-      }).call(this);
-      this._emit('annotationsLoaded', annotations);
-      return cb(null, annotations);
-    },
-    'sync': function(bodies, cb) {
-      var annotations, b;
-      annotations = (function() {
-        var i, len, results1;
-        results1 = [];
-        for (i = 0, len = bodies.length; i < len; i++) {
-          b = bodies[i];
-          results1.push(this._format(this._parse(b)));
-        }
-        return results1;
-      }).call(this);
-      this._emit('sync', annotations);
-      return cb(null, annotations);
-    }
-  };
-
-  AnnotationSync.prototype._eventListeners = {
-    'beforeAnnotationCreated': function(annotation) {
-      if (annotation.$$tag != null) {
-        return;
-      }
-      return this._mkCallRemotelyAndParseResults('beforeCreateAnnotation')(annotation);
-    },
-    'annotationCreated': function(annotation) {
-      if (!((annotation.$$tag != null) && this.cache[annotation.$$tag])) {
-        return;
-      }
-      return this._mkCallRemotelyAndParseResults('createAnnotation')(annotation);
-    },
-    'annotationUpdated': function(annotation) {
-      if (!((annotation.$$tag != null) && this.cache[annotation.$$tag])) {
-        return;
-      }
-      return this._mkCallRemotelyAndParseResults('updateAnnotation')(annotation);
-    },
-    'annotationDeleted': function(annotation) {
-      var onFailure;
-      if (!((annotation.$$tag != null) && this.cache[annotation.$$tag])) {
-        return;
-      }
-      onFailure = (function(_this) {
-        return function(err) {
-          if (!err) {
-            return delete _this.cache[annotation.$$tag];
-          }
-        };
-      })(this);
-      return this._mkCallRemotelyAndParseResults('deleteAnnotation', onFailure)(annotation);
-    },
-    'annotationsLoaded': function(annotations) {
-      var a, bodies;
-      bodies = (function() {
-        var i, len, results1;
-        results1 = [];
-        for (i = 0, len = annotations.length; i < len; i++) {
-          a = annotations[i];
-          if (!a.$$tag) {
-            results1.push(this._format(a));
-          }
-        }
-        return results1;
-      }).call(this);
-      if (!bodies.length) {
-        return;
-      }
-      return this.bridge.call('loadAnnotations', bodies);
-    },
-    'annotationsUnloaded': function(annotations) {
-      var self;
-      self = this;
-      return annotations.forEach(function(annotation) {
-        delete self.cache[annotation.$$tag];
-        return self._mkCallRemotelyAndParseResults('deleteAnnotation')(annotation);
-      });
-    }
-  };
-
-  AnnotationSync.prototype._syncCache = function(channel) {
-    var a, annotations, t;
-    annotations = (function() {
-      var ref, results1;
-      ref = this.cache;
-      results1 = [];
-      for (t in ref) {
-        a = ref[t];
-        results1.push(this._format(a));
-      }
-      return results1;
-    }).call(this);
-    if (annotations.length) {
-      return channel.call('loadAnnotations', annotations);
-    }
-  };
-
-  AnnotationSync.prototype._mkCallRemotelyAndParseResults = function(method, callBack) {
-    return (function(_this) {
-      return function(annotation) {
-        var wrappedCallback;
-        wrappedCallback = function(failure, results) {
-          if (failure == null) {
-            _this._parseResults(results);
-          }
-          return typeof callBack === "function" ? callBack(failure, results) : void 0;
-        };
-        return _this.bridge.call(method, _this._format(annotation), wrappedCallback);
-      };
-    })(this);
-  };
-
-  AnnotationSync.prototype._parseResults = function(results) {
-    var bodies, body, i, j, len, len1;
-    for (i = 0, len = results.length; i < len; i++) {
-      bodies = results[i];
-      bodies = [].concat(bodies);
-      for (j = 0, len1 = bodies.length; j < len1; j++) {
-        body = bodies[j];
-        if (body !== null) {
-          this._parse(body);
-        }
-      }
-    }
-  };
-
-  AnnotationSync.prototype._tag = function(ann, tag) {
-    if (ann.$$tag) {
-      return ann;
-    }
-    tag = tag || window.btoa(Math.random());
-    Object.defineProperty(ann, '$$tag', {
-      value: tag
-    });
-    this.cache[tag] = ann;
-    return ann;
-  };
-
-  AnnotationSync.prototype._parse = function(body) {
-    var local, merged, remote;
-    local = this.cache[body.tag];
-    remote = this.options.parser(body.msg);
-    if (local != null) {
-      merged = this.options.merge(local, remote);
-    } else {
-      merged = remote;
-    }
-    return this._tag(merged, body.tag);
-  };
-
-  AnnotationSync.prototype._format = function(ann) {
-    this._tag(ann);
-    return {
-      tag: ann.$$tag,
-      msg: this.options.formatter(ann)
-    };
-  };
-
-  return AnnotationSync;
-
-})();
-
-
-},{"extend":119}],4:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
 
 AnnotationUIController.$inject = ["$rootScope", "$scope", "annotationUI"];
@@ -649,290 +358,50 @@ function AnnotationUISync($rootScope, $window, annotationUI, bridge) {
 
 module.exports = AnnotationUISync;
 
-},{"./ui-constants":81}],6:[function(require,module,exports){
+},{"./ui-constants":87}],6:[function(require,module,exports){
 'use strict';
 
 /**
- * AnnotationUI provides the central store of UI state for the application,
- * using [Redux](http://redux.js.org/).
+ * AnnotationUI is the central store of state for the sidebar application,
+ * managed using [Redux](http://redux.js.org/).
  *
- * Redux is used to provide a predictable way of updating UI state and
- * responding to UI state changes.
+ * State management in Redux apps work as follows:
+ *
+ *  1. All important application state is stored in a single, immutable object.
+ *  2. The user interface is a presentation of this state. Interaction with the
+ *     UI triggers updates by creating `actions`.
+ *  3. Actions are plain JS objects which describe some event that happened in
+ *     the application. Updates happen by passing actions to a `reducer`
+ *     function which takes the current application state, the action and
+ *     returns the new application state.
+ *
+ *     The process of updating the app state using an action is known as
+ *     'dispatching' the action.
+ *  4. Other parts of the app can subscribe to changes in the app state.
+ *     This is used to to update the UI etc.
+ *
+ * "middleware" functions can wrap the dispatch process in order to implement
+ *  logging, trigger side effects etc.
+ *
+ * Tests for a given action consist of:
+ *
+ *  1. Checking that the UI (or other event source) dispatches the correct
+ *     action when something happens.
+ *  2. Checking that given an initial state, and an action, a reducer returns
+ *     the correct resulting state.
+ *  3. Checking that the UI correctly presents a given state.
  */
 
-var immutable = require('seamless-immutable');
 var redux = require('redux');
 
-var metadata = require('./annotation-metadata');
-var uiConstants = require('./ui-constants');
-var arrayUtil = require('./util/array-util');
+// `.default` is needed because 'redux-thunk' is built as an ES2015 module
+var thunk = require('redux-thunk').default;
 
-function freeze(selection) {
-  if (Object.keys(selection).length) {
-    return immutable(selection);
-  } else {
-    return null;
-  }
-}
-
-function toSet(list) {
-  return list.reduce(function (set, key) {
-    set[key] = true;
-    return set;
-  }, {});
-}
-
-function initialSelection(settings) {
-  var selection = {};
-  if (settings.annotations) {
-    selection[settings.annotations] = true;
-  }
-  return freeze(selection);
-}
-
-function initialState(settings) {
-  return Object.freeze({
-    // Flag that indicates whether the app is the sidebar and connected to
-    // a page where annotations are being shown in context
-    isSidebar: true,
-
-    // List of all loaded annotations
-    annotations: [],
-
-    visibleHighlights: false,
-
-    // Contains a map of annotation tag:true pairs.
-    focusedAnnotationMap: null,
-
-    // Contains a map of annotation id:true pairs.
-    selectedAnnotationMap: initialSelection(settings),
-
-    // Map of annotation IDs to expanded/collapsed state. For annotations not
-    // present in the map, the default state is used which depends on whether
-    // the annotation is a top-level annotation or a reply, whether it is
-    // selected and whether it matches the current filter.
-    expanded: initialSelection(settings) || {},
-
-    // Set of IDs of annotations that have been explicitly shown
-    // by the user even if they do not match the current search filter
-    forceVisible: {},
-
-    // IDs of annotations that should be highlighted
-    highlighted: [],
-
-    filterQuery: null,
-
-    selectedTab: uiConstants.TAB_ANNOTATIONS,
-
-    // Key by which annotations are currently sorted.
-    sortKey: 'Location',
-    // Keys by which annotations can be sorted.
-    sortKeysAvailable: ['Newest', 'Oldest', 'Location'],
-  });
-}
-
-var types = {
-  CLEAR_SELECTION: 'CLEAR_SELECTION',
-  SELECT_ANNOTATIONS: 'SELECT_ANNOTATIONS',
-  FOCUS_ANNOTATIONS: 'FOCUS_ANNOTATIONS',
-  HIGHLIGHT_ANNOTATIONS: 'HIGHLIGHT_ANNOTATIONS',
-  SET_HIGHLIGHTS_VISIBLE: 'SET_HIGHLIGHTS_VISIBLE',
-  SET_FORCE_VISIBLE: 'SET_FORCE_VISIBLE',
-  SET_EXPANDED: 'SET_EXPANDED',
-  ADD_ANNOTATIONS: 'ADD_ANNOTATIONS',
-  REMOVE_ANNOTATIONS: 'REMOVE_ANNOTATIONS',
-  CLEAR_ANNOTATIONS: 'CLEAR_ANNOTATIONS',
-  SET_FILTER_QUERY: 'SET_FILTER_QUERY',
-  SET_SORT_KEY: 'SET_SORT_KEY',
-  SELECT_TAB: 'SELECT_TAB',
-  /**
-   * Update an annotation's status flags after attempted anchoring in the
-   * document completes.
-   */
-  UPDATE_ANCHOR_STATUS: 'UPDATE_ANCHOR_STATUS',
-  /**
-   * Set whether the app is the sidebar or not.
-   *
-   * When not in the sidebar, we do not expect annotations to anchor and always
-   * display all annotations, rather than only those in the current tab.
-   */
-  SET_SIDEBAR: 'SET_SIDEBAR',
-};
-
-/**
- * Return a copy of `current` with all matching annotations in `annotations`
- * removed.
- */
-function excludeAnnotations(current, annotations) {
-  var ids = {};
-  var tags = {};
-  annotations.forEach(function (annot) {
-    if (annot.id) {
-      ids[annot.id] = true;
-    }
-    if (annot.$$tag) {
-      tags[annot.$$tag] = true;
-    }
-  });
-  return current.filter(function (annot) {
-    var shouldRemove = (annot.id && (annot.id in ids)) ||
-                       (annot.$$tag && (annot.$$tag in tags));
-    return !shouldRemove;
-  });
-}
-
-function findByID(annotations, id) {
-  return annotations.find(function (annot) {
-    return annot.id === id;
-  });
-}
-
-function findByTag(annotations, tag) {
-  return annotations.find(function (annot) {
-    return annot.$$tag === tag;
-  });
-}
-
-/**
- * Initialize the status flags and properties of a new annotation.
- */
-function initializeAnnot(annotation) {
-  if (annotation.id) {
-    return annotation;
-  }
-
-  // Currently the user ID, permissions and group of new annotations are
-  // initialized in the <annotation> component controller because the session
-  // state and focused group are not stored in the Redux store. Once they are,
-  // that initialization should be moved here.
-
-  return Object.assign({}, annotation, {
-    // Copy $$tag explicitly because it is non-enumerable
-    $$tag: annotation.$$tag,
-    // New annotations must be anchored
-    $orphan: false,
-  });
-}
-
-function annotationsReducer(state, action) {
-  switch (action.type) {
-  case types.ADD_ANNOTATIONS:
-    {
-      var updatedIDs = {};
-      var updatedTags = {};
-
-      var added = [];
-      var unchanged = [];
-      var updated = [];
-
-      action.annotations.forEach(function (annot) {
-        var existing;
-        if (annot.id) {
-          existing = findByID(state.annotations, annot.id);
-        }
-        if (!existing && annot.$$tag) {
-          existing = findByTag(state.annotations, annot.$$tag);
-        }
-
-        if (existing) {
-          // Merge the updated annotation with the private fields from the local
-          // annotation
-          updated.push(Object.assign({}, existing, annot));
-          if (annot.id) {
-            updatedIDs[annot.id] = true;
-          }
-          if (existing.$$tag) {
-            updatedTags[existing.$$tag] = true;
-          }
-        } else {
-          added.push(initializeAnnot(annot));
-        }
-      });
-
-      state.annotations.forEach(function (annot) {
-        if (!updatedIDs[annot.id] && !updatedTags[annot.$$tag]) {
-          unchanged.push(annot);
-        }
-      });
-
-      return Object.assign({}, state, {
-        annotations: added.concat(updated).concat(unchanged),
-      });
-    }
-  case types.REMOVE_ANNOTATIONS:
-    {
-      var annots = excludeAnnotations(state.annotations, action.annotations);
-      var selectedTab = state.selectedTab;
-      if (selectedTab === uiConstants.TAB_ORPHANS &&
-          arrayUtil.countIf(annots, metadata.isOrphan) === 0) {
-        selectedTab = uiConstants.TAB_ANNOTATIONS;
-      }
-      return Object.assign({}, state, {
-        annotations: annots,
-        selectedTab: selectedTab,
-      });
-    }
-  case types.CLEAR_ANNOTATIONS:
-    return Object.assign({}, state, {annotations: []});
-  case types.UPDATE_ANCHOR_STATUS:
-    {
-      var annotations = state.annotations.map(function (annot) {
-        var match = (annot.id && annot.id === action.id) ||
-                    (annot.$$tag && annot.$$tag === action.tag);
-        if (match) {
-          return Object.assign({}, annot, {
-            $orphan: action.isOrphan,
-            $$tag: action.tag,
-          });
-        } else {
-          return annot;
-        }
-      });
-      return Object.assign({}, state, {annotations: annotations});
-    }
-  default:
-    return state;
-  }
-}
-
-function reducer(state, action) {
-  /*jshint maxcomplexity: false*/
-  state = annotationsReducer(state, action);
-
-  switch (action.type) {
-  case types.CLEAR_SELECTION:
-    return Object.assign({}, state, {
-      filterQuery: null,
-      selectedAnnotationMap: null,
-    });
-  case types.SELECT_ANNOTATIONS:
-    return Object.assign({}, state, {selectedAnnotationMap: action.selection});
-  case types.FOCUS_ANNOTATIONS:
-    return Object.assign({}, state, {focusedAnnotationMap: action.focused});
-  case types.SET_HIGHLIGHTS_VISIBLE:
-    return Object.assign({}, state, {visibleHighlights: action.visible});
-  case types.SET_FORCE_VISIBLE:
-    return Object.assign({}, state, {forceVisible: action.forceVisible});
-  case types.SET_EXPANDED:
-    return Object.assign({}, state, {expanded: action.expanded});
-  case types.HIGHLIGHT_ANNOTATIONS:
-    return Object.assign({}, state, {highlighted: action.highlighted});
-  case types.SELECT_TAB:
-    return Object.assign({}, state, {selectedTab: action.tab});
-  case types.SET_FILTER_QUERY:
-    return Object.assign({}, state, {
-      filterQuery: action.query,
-      forceVisible: {},
-      expanded: {},
-    });
-  case types.SET_SIDEBAR:
-    return Object.assign({}, state, {isSidebar: action.isSidebar});
-  case types.SET_SORT_KEY:
-    return Object.assign({}, state, {sortKey: action.key});
-  default:
-    return state;
-  }
-}
+var reducers = require('./reducers');
+var annotationsReducer = require('./reducers/annotations');
+var selectionReducer = require('./reducers/selection');
+var viewerReducer = require('./reducers/viewer');
+var util = require('./reducers/util');
 
 /**
  * Redux middleware which triggers an Angular change-detection cycle
@@ -959,263 +428,54 @@ function angularDigestMiddleware($rootScope) {
   };
 }
 
-/**
- * Stores the UI state of the annotator in connected clients.
- *
- * This includes:
- * - The IDs of annotations that are currently selected or focused
- * - The state of the bucket bar
- */
 // @ngInject
 module.exports = function ($rootScope, settings) {
   var enhancer = redux.applyMiddleware(
+    // The `thunk` middleware handles actions which are functions.
+    // This is used to implement actions which have side effects or are
+    // asynchronous (see https://github.com/gaearon/redux-thunk#motivation)
+    thunk,
     angularDigestMiddleware.bind(null, $rootScope)
   );
-  var store = redux.createStore(reducer, initialState(settings), enhancer);
+  var store = redux.createStore(reducers.update, reducers.init(settings),
+    enhancer);
 
-  function select(annotations) {
-    store.dispatch({
-      type: types.SELECT_ANNOTATIONS,
-      selection: freeze(annotations),
-    });
-  }
+  // Expose helper functions that create actions as methods of the
+  // `annotationUI` service to make using them easier from app code. eg.
+  //
+  // Instead of:
+  //   annotationUI.dispatch(annotations.actions.addAnnotations(annotations))
+  // You can use:
+  //   annotationUI.addAnnotations(annotations)
+  //
+  var actionCreators = redux.bindActionCreators(Object.assign({},
+    annotationsReducer.actions,
+    selectionReducer.actions,
+    viewerReducer.actions
+  ), store.dispatch);
 
-  function findByID(id) {
-    return store.getState().annotations.find(function (annot) {
-      return annot.id === id;
-    });
-  }
+  // Expose selectors as methods of the `annotationUI` to make using them easier
+  // from app code.
+  //
+  // eg. Instead of:
+  //   selection.isAnnotationSelected(annotationUI.getState(), id)
+  // You can use:
+  //   annotationUI.isAnnotationSelected(id)
+  var selectors = util.bindSelectors({
+    isAnnotationSelected: selectionReducer.isAnnotationSelected,
+    hasSelectedAnnotations: selectionReducer.hasSelectedAnnotations,
 
-  return {
-    /**
-     * Return the current UI state of the sidebar. This should not be modified
-     * directly but only though the helper methods below.
-     */
-    getState: store.getState,
+    annotationExists: annotationsReducer.annotationExists,
+    savedAnnotations: annotationsReducer.savedAnnotations,
 
-    /** Listen for changes to the UI state of the sidebar. */
-    subscribe: store.subscribe,
+    isSidebar: viewerReducer.isSidebar,
+  }, store.getState);
 
-    /**
-     * Sets whether annotation highlights in connected documents are shown
-     * or not.
-     */
-    setShowHighlights: function (show) {
-      store.dispatch({
-        type: types.SET_HIGHLIGHTS_VISIBLE,
-        visible: show,
-      });
-    },
-
-    /**
-     * Sets which annotations are currently focused.
-     *
-     * @param {Array<string>} Tags of annotations to focus
-     */
-    focusAnnotations: function (tags) {
-      store.dispatch({
-        type: types.FOCUS_ANNOTATIONS,
-        focused: freeze(toSet(tags)),
-      });
-    },
-
-    /**
-     * Return true if any annotations are currently selected.
-     */
-    hasSelectedAnnotations: function () {
-      return !!store.getState().selectedAnnotationMap;
-    },
-
-    /**
-     * Sets whether replies to the annotation with ID `id` are collapsed.
-     *
-     * @param {string} id - Annotation ID
-     * @param {boolean} collapsed
-     */
-    setCollapsed: function (id, collapsed) {
-      var expanded = Object.assign({}, store.getState().expanded);
-      expanded[id] = !collapsed;
-      store.dispatch({
-        type: types.SET_EXPANDED,
-        expanded: expanded,
-      });
-    },
-
-    /**
-     * Sets whether a given annotation should be visible, even if it does not
-     * match the current search query.
-     *
-     * @param {string} id - Annotation ID
-     * @param {boolean} visible
-     */
-    setForceVisible: function (id, visible) {
-      var forceVisible = Object.assign({}, store.getState().forceVisible);
-      forceVisible[id] = visible;
-      store.dispatch({
-        type: types.SET_FORCE_VISIBLE,
-        forceVisible: forceVisible,
-      });
-    },
-
-    /**
-     * Returns true if the annotation with the given `id` is selected.
-     */
-    isAnnotationSelected: function (id) {
-      return (store.getState().selectedAnnotationMap || {}).hasOwnProperty(id);
-    },
-
-    /**
-     * Set the currently selected annotation IDs.
-     */
-    selectAnnotations: function (ids) {
-      select(toSet(ids));
-    },
-
-    /** Toggle whether annotations are selected or not. */
-    toggleSelectedAnnotations: function (ids) {
-      var selection = Object.assign({}, store.getState().selectedAnnotationMap);
-      for (var i = 0; i < ids.length; i++) {
-        var id = ids[i];
-        if (selection[id]) {
-          delete selection[id];
-        } else {
-          selection[id] = true;
-        }
-      }
-      select(selection);
-    },
-
-    /** De-select an annotation. */
-    removeSelectedAnnotation: function (id) {
-      var selection = Object.assign({}, store.getState().selectedAnnotationMap);
-      if (!selection || !id) {
-        return;
-      }
-      delete selection[id];
-      select(selection);
-    },
-
-    /** De-select all annotations. */
-    clearSelectedAnnotations: function () {
-      store.dispatch({type: 'CLEAR_SELECTION'});
-    },
-
-    /** Add annotations to the currently displayed set. */
-    addAnnotations: function (annotations) {
-      var added = annotations.filter(function (annot) {
-        return !findByID(annot.id);
-      });
-
-      store.dispatch({
-        type: types.ADD_ANNOTATIONS,
-        annotations: annotations,
-      });
-
-      if (!store.getState().isSidebar) {
-        return;
-      }
-
-      // If anchoring fails to complete in a reasonable amount of time, then
-      // we assume that the annotation failed to anchor. If it does later
-      // successfully anchor then the status will be updated.
-      var ANCHORING_TIMEOUT = 500;
-
-      var anchoringAnnots = added.filter(metadata.isWaitingToAnchor);
-      if (anchoringAnnots.length) {
-        setTimeout(function () {
-          arrayUtil
-            .filterMap(anchoringAnnots, function (annot) {
-              return findByID(annot.id);
-            })
-            .filter(metadata.isWaitingToAnchor)
-            .forEach(function (orphan) {
-              store.dispatch({
-                type: types.UPDATE_ANCHOR_STATUS,
-                id: orphan.id,
-                tag: orphan.$$tag,
-                isOrphan: true,
-              });
-            });
-        }, ANCHORING_TIMEOUT);
-      }
-    },
-
-    /** Remove annotations from the currently displayed set. */
-    removeAnnotations: function (annotations) {
-      store.dispatch({
-        type: types.REMOVE_ANNOTATIONS,
-        annotations: annotations,
-      });
-    },
-
-    /** Set the currently displayed annotations to the empty set. */
-    clearAnnotations: function () {
-      store.dispatch({type: types.CLEAR_ANNOTATIONS});
-    },
-
-    /**
-     * Updating the local tag and anchoring status of an annotation.
-     *
-     * @param {string|null} id - Annotation ID
-     * @param {string} tag - The local tag assigned to this annotation to link
-     *        the object in the page and the annotation in the sidebar
-     * @param {boolean} isOrphan - True if the annotation failed to anchor
-     */
-    updateAnchorStatus: function (id, tag, isOrphan) {
-      store.dispatch({
-        type: types.UPDATE_ANCHOR_STATUS,
-        id: id,
-        tag: tag,
-        isOrphan: isOrphan,
-      });
-    },
-
-    /** Set the type annotations to be displayed. */
-    selectTab: function (type) {
-      store.dispatch({
-        type: types.SELECT_TAB,
-        tab: type,
-      });
-    },
-
-    /** Set the query used to filter displayed annotations. */
-    setFilterQuery: function (query) {
-      store.dispatch({
-        type: types.SET_FILTER_QUERY,
-        query: query,
-      });
-    },
-
-    /** Sets the sort key for the annotation list. */
-    setSortKey: function (key) {
-      store.dispatch({
-        type: types.SET_SORT_KEY,
-        key: key,
-      });
-    },
-
-    /**
-     * Highlight annotations with the given `ids`.
-     *
-     * This is used to indicate the specific annotation in a thread that was
-     * linked to for example.
-     */
-    highlightAnnotations: function (ids) {
-      store.dispatch({
-        type: types.HIGHLIGHT_ANNOTATIONS,
-        highlighted: ids,
-      });
-    },
-
-    /** Set whether the app is the sidebar */
-    setAppIsSidebar: function (isSidebar) {
-      store.dispatch({type: types.SET_SIDEBAR, isSidebar: isSidebar});
-    },
-  };
+  return Object.assign(store, actionCreators, selectors);
 };
 module.exports.$inject = ["$rootScope", "settings"];
 
-},{"./annotation-metadata":2,"./ui-constants":81,"./util/array-util":83,"redux":136,"seamless-immutable":146}],7:[function(require,module,exports){
+},{"./reducers":68,"./reducers/annotations":67,"./reducers/selection":69,"./reducers/util":70,"./reducers/viewer":71,"redux":143,"redux-thunk":137}],7:[function(require,module,exports){
 'use strict';
 
 AnnotationViewerController.$inject = ["$location", "$routeParams", "$scope", "annotationUI", "rootThread", "streamer", "store", "streamFilter", "annotationMapper"];
@@ -1325,8 +585,8 @@ function authStateFromUserID(userid) {
 // @ngInject
 module.exports = function AppController(
   $controller, $document, $location, $rootScope, $route, $scope,
-  $window, annotationUI, auth, drafts, features, groups,
-  serviceUrl, session, settings
+  $window, annotationUI, auth, drafts, features, frameSync, groups,
+  serviceUrl, session, settings, streamer
 ) {
   $controller('AnnotationUIController', {$scope: $scope});
 
@@ -1352,6 +612,9 @@ module.exports = function AppController(
   // Check to see if we're in the sidebar, or on a standalone page such as
   // the stream page or an individual annotation page.
   $scope.isSidebar = $window.top !== $window;
+  if ($scope.isSidebar) {
+    frameSync.connect();
+  }
 
   $scope.serviceUrl = serviceUrl;
 
@@ -1452,14 +715,16 @@ module.exports = function AppController(
       annotationUI.setFilterQuery(query);
     },
   };
-};
-module.exports.$inject = ["$controller", "$document", "$location", "$rootScope", "$route", "$scope", "$window", "annotationUI", "auth", "drafts", "features", "groups", "serviceUrl", "session", "settings"];
 
-},{"./events":50,"./filter/persona":52,"./ui-constants":81,"./util/scope-timeout":85,"scroll-into-view":145}],9:[function(require,module,exports){
+  $scope.countPendingUpdates = streamer.countPendingUpdates;
+  $scope.applyPendingUpdates = streamer.applyPendingUpdates;
+};
+module.exports.$inject = ["$controller", "$document", "$location", "$rootScope", "$route", "$scope", "$window", "annotationUI", "auth", "drafts", "features", "frameSync", "groups", "serviceUrl", "session", "settings", "streamer"];
+
+},{"./events":50,"./filter/persona":52,"./ui-constants":87,"./util/scope-timeout":91,"scroll-into-view":152}],9:[function(require,module,exports){
 'use strict';
 
 configureLocation.$inject = ["$locationProvider"];
-setupCrossFrame.$inject = ["crossframe"];
 configureHttp.$inject = ["$httpProvider", "jwtInterceptorProvider"];
 setupHttp.$inject = ["$http", "streamer"];
 configureRoutes.$inject = ["$routeProvider"];
@@ -1546,11 +811,6 @@ function configureRoutes($routeProvider) {
 }
 
 // @ngInject
-function setupCrossFrame(crossframe) {
-  return crossframe.connect();
-}
-
-// @ngInject
 function configureHttp($httpProvider, jwtInterceptorProvider) {
   // Use the Pyramid XSRF header name
   $httpProvider.defaults.xsrfHeaderName = 'X-CSRF-Token';
@@ -1625,6 +885,7 @@ module.exports = angular.module('h', [
   .directive('sortDropdown', require('./directive/sort-dropdown'))
   .directive('spinner', require('./directive/spinner'))
   .directive('statusButton', require('./directive/status-button'))
+  .directive('svgIcon', require('./directive/svg-icon'))
   .directive('tagEditor', require('./directive/tag-editor'))
   .directive('threadList', require('./directive/thread-list'))
   .directive('timestamp', require('./directive/timestamp'))
@@ -1635,11 +896,11 @@ module.exports = angular.module('h', [
   .service('annotationUI', require('./annotation-ui'))
   .service('auth', require('./auth').service)
   .service('bridge', require('./bridge'))
-  .service('crossframe', require('./cross-frame'))
   .service('drafts', require('./drafts'))
   .service('features', require('./features'))
   .service('flash', require('./flash'))
   .service('formRespond', require('./form-respond'))
+  .service('frameSync', require('./frame-sync').default)
   .service('groups', require('./groups'))
   .service('host', require('./host'))
   .service('localStorage', require('./local-storage'))
@@ -1657,7 +918,6 @@ module.exports = angular.module('h', [
 
   .factory('store', require('./store'))
 
-  .value('AnnotationSync', require('./annotation-sync'))
   .value('AnnotationUISync', require('./annotation-ui-sync'))
   .value('Discovery', require('./discovery'))
   .value('ExcerptOverflowMonitor', require('./directive/excerpt-overflow-monitor'))
@@ -1671,7 +931,6 @@ module.exports = angular.module('h', [
   .config(configureLocation)
   .config(configureRoutes)
 
-  .run(setupCrossFrame)
   .run(setupHttp);
 
 processAppOpts();
@@ -1679,7 +938,7 @@ processAppOpts();
 var appEl = document.querySelector('hypothesis-app');
 angular.bootstrap(appEl, ['h'], {strictDi: true});
 
-},{"../../templates/client/viewer.html":115,"./annotation-mapper":1,"./annotation-sync":3,"./annotation-ui":6,"./annotation-ui-controller":4,"./annotation-ui-sync":5,"./annotation-viewer-controller":7,"./auth":10,"./bridge":11,"./cross-frame":13,"./directive/annotation":17,"./directive/annotation-share-dialog":15,"./directive/annotation-thread":16,"./directive/app":18,"./directive/dropdown-menu-btn":19,"./directive/excerpt":21,"./directive/excerpt-overflow-monitor":20,"./directive/form-input":22,"./directive/form-validate":23,"./directive/group-list":24,"./directive/h-autofocus":25,"./directive/h-on-touch":26,"./directive/h-tooltip":27,"./directive/help-link":28,"./directive/help-panel":29,"./directive/loggedout-message":30,"./directive/login-control":31,"./directive/login-form":32,"./directive/markdown":33,"./directive/publish-annotation-btn":34,"./directive/search-input":35,"./directive/search-status-bar":36,"./directive/selection-tabs":37,"./directive/share-dialog":38,"./directive/sidebar-tutorial":39,"./directive/sort-dropdown":40,"./directive/spinner":41,"./directive/status-button":42,"./directive/tag-editor":43,"./directive/thread-list":44,"./directive/timestamp":45,"./directive/top-bar":46,"./directive/window-scroll":47,"./discovery":48,"./drafts":49,"./features":51,"./filter/url":53,"./flash":54,"./form-respond":55,"./groups":57,"./host":58,"./live-reload-client":59,"./local-storage":60,"./permissions":63,"./polyfills":"/h/static/scripts/polyfills.js","./query-parser":64,"./raven":65,"./root-thread":68,"./search-filter":70,"./service-url":71,"./session":72,"./settings":73,"./store":74,"./stream-controller":75,"./stream-filter":76,"./streamer":77,"./tags":79,"./time":80,"./unicode":82,"./vendor/ui-bootstrap-custom-tpls-0.13.4":87,"./view-filter":88,"./virtual-thread-list":89,"./widget-controller":91,"angular":"angular","angular-jwt":"angular-jwt","angular-resource":"angular-resource","angular-route":"angular-route","angular-sanitize":"angular-sanitize","angular-toastr":"angular-toastr","angulartics":116,"angulartics/src/angulartics-ga":"angulartics/src/angulartics-ga","autofill-event":117,"ng-tags-input":"ng-tags-input","query-string":128}],10:[function(require,module,exports){
+},{"../../templates/client/viewer.html":121,"./annotation-mapper":2,"./annotation-ui":6,"./annotation-ui-controller":4,"./annotation-ui-sync":5,"./annotation-viewer-controller":7,"./auth":10,"./bridge":11,"./directive/annotation":16,"./directive/annotation-share-dialog":14,"./directive/annotation-thread":15,"./directive/app":17,"./directive/dropdown-menu-btn":18,"./directive/excerpt":20,"./directive/excerpt-overflow-monitor":19,"./directive/form-input":21,"./directive/form-validate":22,"./directive/group-list":23,"./directive/h-autofocus":24,"./directive/h-on-touch":25,"./directive/h-tooltip":26,"./directive/help-link":27,"./directive/help-panel":28,"./directive/loggedout-message":29,"./directive/login-control":30,"./directive/login-form":31,"./directive/markdown":32,"./directive/publish-annotation-btn":33,"./directive/search-input":34,"./directive/search-status-bar":35,"./directive/selection-tabs":36,"./directive/share-dialog":37,"./directive/sidebar-tutorial":38,"./directive/sort-dropdown":39,"./directive/spinner":40,"./directive/status-button":41,"./directive/svg-icon":42,"./directive/tag-editor":43,"./directive/thread-list":44,"./directive/timestamp":45,"./directive/top-bar":46,"./directive/window-scroll":47,"./discovery":48,"./drafts":49,"./features":51,"./filter/url":53,"./flash":54,"./form-respond":55,"./frame-sync":57,"./groups":58,"./host":59,"./live-reload-client":60,"./local-storage":61,"./permissions":64,"./polyfills":"/h/static/scripts/polyfills.js","./query-parser":65,"./raven":66,"./root-thread":74,"./search-filter":76,"./service-url":77,"./session":78,"./settings":79,"./store":80,"./stream-controller":81,"./stream-filter":82,"./streamer":83,"./tags":85,"./time":86,"./unicode":88,"./vendor/ui-bootstrap-custom-tpls-0.13.4":93,"./view-filter":94,"./virtual-thread-list":95,"./widget-controller":97,"angular":"angular","angular-jwt":"angular-jwt","angular-resource":"angular-resource","angular-route":"angular-route","angular-sanitize":"angular-sanitize","angular-toastr":"angular-toastr","angulartics":122,"angulartics/src/angulartics-ga":"angulartics/src/angulartics-ga","autofill-event":123,"ng-tags-input":"ng-tags-input","query-string":134}],10:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1977,7 +1236,7 @@ module.exports = Bridge = (function() {
 })();
 
 
-},{"./frame-rpc":56,"extend":119}],12:[function(require,module,exports){
+},{"./frame-rpc":56,"extend":125}],12:[function(require,module,exports){
 'use strict';
 
 /** Default state for new threads, before applying filters etc. */
@@ -2344,124 +1603,6 @@ function buildThread(annotations, opts) {
 module.exports = buildThread;
 
 },{}],13:[function(require,module,exports){
-var CrossFrame,
-  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
-  slice = [].slice;
-
-module.exports = CrossFrame = (function() {
-  CrossFrame.$inject = ['$rootScope', '$document', '$window', 'store', 'annotationUI', 'Discovery', 'bridge', 'AnnotationSync', 'AnnotationUISync'];
-
-  function CrossFrame($rootScope, $document, $window, store, annotationUI, Discovery, bridge, AnnotationSync, AnnotationUISync) {
-    var addFrame, createAnnotationSync, createAnnotationUISync, createDiscovery;
-    this.frames = [];
-    createDiscovery = function() {
-      var options;
-      options = {
-        server: true
-      };
-      return new Discovery($window, options);
-    };
-    createAnnotationSync = function() {
-      var options, whitelist;
-      whitelist = ['$orphan', '$highlight', 'target', 'document', 'uri'];
-      options = {
-        formatter: function(annotation) {
-          var formatted, k, v;
-          formatted = {};
-          for (k in annotation) {
-            v = annotation[k];
-            if (indexOf.call(whitelist, k) >= 0) {
-              formatted[k] = v;
-            }
-          }
-          return formatted;
-        },
-        parser: function(annotation) {
-          var k, parsed, v;
-          parsed = {};
-          for (k in annotation) {
-            v = annotation[k];
-            if (indexOf.call(whitelist, k) >= 0) {
-              parsed[k] = v;
-            }
-          }
-          return parsed;
-        },
-        merge: function(local, remote) {
-          annotationUI.updateAnchorStatus(local.id, local.$$tag, remote.$orphan);
-          return local;
-        },
-        emit: function() {
-          var args;
-          args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return $rootScope.$apply(function() {
-            var ref;
-            return (ref = $rootScope.$broadcast).call.apply(ref, [$rootScope].concat(slice.call(args)));
-          });
-        },
-        on: function(event, handler) {
-          return $rootScope.$on(event, function() {
-            var args, event;
-            event = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
-            return handler.apply(this, args);
-          });
-        }
-      };
-      return new AnnotationSync(bridge, options);
-    };
-    createAnnotationUISync = function(annotationSync) {
-      return new AnnotationUISync($rootScope, $window, annotationUI, bridge);
-    };
-    addFrame = (function(_this) {
-      return function(channel) {
-        return channel.call('getDocumentInfo', function(err, info) {
-          var documentFingerprint, searchUris;
-          if (err) {
-            return channel.destroy();
-          } else {
-            searchUris = [info.uri];
-            documentFingerprint = null;
-            if (info.metadata && info.metadata.documentFingerprint) {
-              documentFingerprint = info.metadata.documentFingerprint;
-              searchUris = info.metadata.link.map(function(link) {
-                return link.href;
-              });
-            }
-            return $rootScope.$apply(function() {
-              return _this.frames.push({
-                channel: channel,
-                uri: info.uri,
-                searchUris: searchUris,
-                documentFingerprint: documentFingerprint
-              });
-            });
-          }
-        });
-      };
-    })(this);
-    this.connect = function() {
-      var annotationSync, annotationUISync, discovery, onDiscoveryCallback;
-      discovery = createDiscovery();
-      bridge.onConnect(addFrame);
-      annotationSync = createAnnotationSync();
-      annotationUISync = createAnnotationUISync(annotationSync);
-      onDiscoveryCallback = function(source, origin, token) {
-        return bridge.createChannel(source, origin, token);
-      };
-      discovery.startDiscovery(onDiscoveryCallback);
-      return this.call = bridge.call.bind(bridge);
-    };
-    this.call = function() {
-      throw new Error('connect() must be called before call()');
-    };
-  }
-
-  return CrossFrame;
-
-})();
-
-
-},{}],14:[function(require,module,exports){
 'use strict';
 
 // cached date formatting instance.
@@ -2497,7 +1638,7 @@ module.exports = {
   format: format,
 };
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 var angular = require('angular');
@@ -2575,7 +1716,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/annotation_share_dialog.html":93,"../util/scope-timeout":85,"angular":"angular"}],16:[function(require,module,exports){
+},{"../../../templates/client/annotation_share_dialog.html":99,"../util/scope-timeout":91,"angular":"angular"}],15:[function(require,module,exports){
 'use strict';
 
 function hiddenCount(thread) {
@@ -2701,12 +1842,12 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/annotation_thread.html":94}],17:[function(require,module,exports){
+},{"../../../templates/client/annotation_thread.html":100}],16:[function(require,module,exports){
 /* eslint consistent-this: ["error", "vm"] */
 
 'use strict';
 
-AnnotationController.$inject = ["$document", "$q", "$rootScope", "$scope", "$timeout", "$window", "annotationUI", "annotationMapper", "drafts", "flash", "features", "groups", "permissions", "serviceUrl", "session", "store"];
+AnnotationController.$inject = ["$document", "$q", "$rootScope", "$scope", "$timeout", "$window", "annotationUI", "annotationMapper", "drafts", "flash", "features", "groups", "permissions", "serviceUrl", "session", "store", "streamer"];
 var annotationMetadata = require('../annotation-metadata');
 var events = require('../events');
 var memoize = require('../util/memoize');
@@ -2756,7 +1897,7 @@ function updateModel(annotation, changes, permissions) {
 function AnnotationController(
   $document, $q, $rootScope, $scope, $timeout, $window, annotationUI,
   annotationMapper, drafts, flash, features, groups, permissions, serviceUrl,
-  session, store) {
+  session, store, streamer) {
 
   var vm = this;
   var newlyCreatedByHighlightButton;
@@ -2827,13 +1968,6 @@ function AnnotationController(
       */
     newlyCreatedByHighlightButton = vm.annotation.$highlight || false;
 
-    // When a new annotation is created, remove any existing annotations that
-    // are empty.
-    $scope.$on(events.BEFORE_ANNOTATION_CREATED, deleteIfNewAndEmpty);
-
-    // Call `onGroupFocused()` whenever the currently-focused group changes.
-    $scope.$on(events.GROUP_FOCUSED, onGroupFocused);
-
     // New annotations (just created locally by the client, rather then
     // received from the server) have some fields missing. Add them.
     vm.annotation.user = vm.annotation.user || session.state.userid;
@@ -2860,19 +1994,6 @@ function AnnotationController(
       if (isNew(vm.annotation) || drafts.get(vm.annotation)) {
         vm.edit();
       }
-    }
-  }
-
-  function deleteIfNewAndEmpty() {
-    if (isNew(vm.annotation) && !vm.state().text && vm.state().tags.length === 0) {
-      vm.revert();
-    }
-  }
-
-  function onGroupFocused() {
-    // New annotations move to the new group, when a new group is focused.
-    if (isNew(vm.annotation) && !isReply(vm.annotation)) {
-      vm.annotation.group = groups.focused().id;
     }
   }
 
@@ -3169,6 +2290,10 @@ function AnnotationController(
     return persona.username(vm.annotation.user);
   };
 
+  vm.isDeleted = function () {
+    return streamer.hasPendingDeletion(vm.annotation.id);
+  };
+
   vm.isReply = function () {
     return isReply(vm.annotation);
   };
@@ -3267,7 +2392,7 @@ module.exports = {
   Controller: AnnotationController,
 };
 
-},{"../../../templates/client/annotation.html":92,"../annotation-metadata":2,"../events":50,"../filter/persona":52,"../util/memoize":84}],18:[function(require,module,exports){
+},{"../../../templates/client/annotation.html":98,"../annotation-metadata":3,"../events":50,"../filter/persona":52,"../util/memoize":90}],17:[function(require,module,exports){
 'use strict';
 
 var AppController = require('../app-controller');
@@ -3281,7 +2406,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/app.html":95,"../app-controller":8}],19:[function(require,module,exports){
+},{"../../../templates/client/app.html":101,"../app-controller":8}],18:[function(require,module,exports){
 'use strict';
 
 // @ngInject
@@ -3315,7 +2440,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/dropdown_menu_btn.html":96}],20:[function(require,module,exports){
+},{"../../../templates/client/dropdown_menu_btn.html":102}],19:[function(require,module,exports){
 'use strict';
 
 function toPx(val) {
@@ -3433,7 +2558,7 @@ function ExcerptOverflowMonitor(excerpt, requestAnimationFrame) {
 
 module.exports = ExcerptOverflowMonitor;
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 excerpt.$inject = ["ExcerptOverflowMonitor"];
@@ -3626,7 +2751,7 @@ module.exports = {
   Controller: ExcerptController,
 };
 
-},{"../../../templates/client/excerpt.html":97}],22:[function(require,module,exports){
+},{"../../../templates/client/excerpt.html":103}],21:[function(require,module,exports){
 module.exports = function() {
   return {
     link: function(scope, elem, attr, arg) {
@@ -3669,7 +2794,7 @@ module.exports = function() {
 };
 
 
-},{}],23:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 module.exports = function() {
   return {
     controller: function() {
@@ -3707,7 +2832,7 @@ module.exports = function() {
 };
 
 
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 // @ngInject
@@ -3758,7 +2883,7 @@ module.exports = {
   Controller: GroupListController,
 };
 
-},{"../../../templates/client/group_list.html":98}],25:[function(require,module,exports){
+},{"../../../templates/client/group_list.html":104}],24:[function(require,module,exports){
 'use strict';
 
 /** An attribute directive that focuses an <input> when it's linked by Angular.
@@ -3783,7 +2908,7 @@ module.exports = function() {
   };
 };
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3832,7 +2957,7 @@ module.exports = function ($parse) {
 };
 module.exports.$inject = ["$parse"];
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 var theTooltip;
@@ -3873,8 +2998,17 @@ function Tooltip(rootElement) {
     var tooltipRect = this._el.getBoundingClientRect();
 
     var targetRect = target.getBoundingClientRect();
-    var top = targetRect.top - tooltipRect.height - TOOLTIP_ARROW_HEIGHT;
+    var top;
+
+    if (this.state.direction === 'up') {
+      top = targetRect.bottom + TOOLTIP_ARROW_HEIGHT;
+    } else {
+      top = targetRect.top - tooltipRect.height - TOOLTIP_ARROW_HEIGHT;
+    }
     var left = targetRect.right - tooltipRect.width;
+
+    this._el.classList.toggle('tooltip--up', this.state.direction === 'up');
+    this._el.classList.toggle('tooltip--down', this.state.direction === 'down');
 
     Object.assign(this._el.style, {
       visibility: '',
@@ -3886,10 +3020,13 @@ function Tooltip(rootElement) {
   this._el = rootElement.ownerDocument.createElement('div');
   this._el.innerHTML = '<span class="tooltip-label js-tooltip-label"></span>';
   this._el.className = 'tooltip';
+
   rootElement.appendChild(this._el);
   this._labelEl = this._el.querySelector('.js-tooltip-label');
 
-  this.setState({});
+  this.setState({
+    direction: 'down',
+  });
 }
 
 /**
@@ -3913,7 +3050,11 @@ module.exports = function () {
       var el = $element[0];
 
       el.addEventListener('mouseover', function () {
-        theTooltip.setState({target: el});
+        var direction = el.getAttribute('tooltip-direction') || 'down';
+        theTooltip.setState({
+          direction: direction,
+          target: el,
+        });
       });
 
       el.addEventListener('mouseout', function () {
@@ -3930,7 +3071,7 @@ module.exports = function () {
   };
 };
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -3951,7 +3092,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/help_link.html":99}],29:[function(require,module,exports){
+},{"../../../templates/client/help_link.html":105}],28:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3965,15 +3106,15 @@ module.exports = function () {
     bindToController: true,
     controllerAs: 'vm',
     // @ngInject
-    controller: ["$scope", "$window", "crossframe", "serviceUrl", function ($scope, $window, crossframe, serviceUrl) {
+    controller: ["$scope", "$window", "frameSync", "serviceUrl", function ($scope, $window, frameSync, serviceUrl) {
       this.userAgent = $window.navigator.userAgent;
-      this.version = '0.41.0';  // replaced by versionify
+      this.version = '0.46.0';  // replaced by versionify
       this.dateTime = new Date();
       this.serviceUrl = serviceUrl;
 
       $scope.$watchCollection(
         function () {
-          return crossframe.frames;
+          return frameSync.frames;
         },
         function (frames) {
           if (frames.length === 0) {
@@ -3993,7 +3134,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/help_panel.html":100}],30:[function(require,module,exports){
+},{"../../../templates/client/help_panel.html":106}],29:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -4015,7 +3156,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/loggedout_message.html":101}],31:[function(require,module,exports){
+},{"../../../templates/client/loggedout_message.html":107}],30:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -4055,7 +3196,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/login_control.html":102}],32:[function(require,module,exports){
+},{"../../../templates/client/login_control.html":108}],31:[function(require,module,exports){
 'use strict';
 
 Controller.$inject = ["$scope", "$timeout", "flash", "session", "formRespond", "serviceUrl"];
@@ -4168,7 +3309,7 @@ module.exports = {
   Controller: Controller,
 };
 
-},{"../../../templates/client/login_form.html":103,"angular":"angular"}],33:[function(require,module,exports){
+},{"../../../templates/client/login_form.html":109,"angular":"angular"}],32:[function(require,module,exports){
 'use strict';
 
 var debounce = require('lodash.debounce');
@@ -4343,7 +3484,7 @@ module.exports = function($sanitize) {
 };
 module.exports.$inject = ["$sanitize"];
 
-},{"../../../templates/client/markdown.html":104,"../markdown-commands":61,"../media-embedder":62,"../render-markdown":66,"../util/scope-timeout":85,"lodash.debounce":123}],34:[function(require,module,exports){
+},{"../../../templates/client/markdown.html":110,"../markdown-commands":62,"../media-embedder":63,"../render-markdown":72,"../util/scope-timeout":91,"lodash.debounce":129}],33:[function(require,module,exports){
 'use strict';
 
 /**
@@ -4386,7 +3527,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/publish_annotation_btn.html":105}],35:[function(require,module,exports){
+},{"../../../templates/client/publish_annotation_btn.html":111}],34:[function(require,module,exports){
 'use strict';
 
 // @ngInject
@@ -4442,7 +3583,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/search_input.html":106}],36:[function(require,module,exports){
+},{"../../../templates/client/search_input.html":112}],35:[function(require,module,exports){
 'use strict';
 
 var uiConstants = require('../ui-constants');
@@ -4472,7 +3613,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/search_status_bar.html":107,"../ui-constants":81}],37:[function(require,module,exports){
+},{"../../../templates/client/search_status_bar.html":113,"../ui-constants":87}],36:[function(require,module,exports){
 'use strict';
 
 var uiConstants = require('../ui-constants');
@@ -4520,14 +3661,14 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/selection_tabs.html":108,"../ui-constants":81}],38:[function(require,module,exports){
+},{"../../../templates/client/selection_tabs.html":114,"../ui-constants":87}],37:[function(require,module,exports){
 'use strict';
 
-ShareDialogController.$inject = ["$scope", "$element", "crossframe"];
+ShareDialogController.$inject = ["$scope", "$element", "frameSync"];
 var VIA_PREFIX = 'https://via.hypothes.is/';
 
 // @ngInject
-function ShareDialogController($scope, $element, crossframe) {
+function ShareDialogController($scope, $element, frameSync) {
   var self = this;
 
   function updateViaLink(frames) {
@@ -4548,7 +3689,7 @@ function ShareDialogController($scope, $element, crossframe) {
   viaInput.focus();
   viaInput.select();
 
-  $scope.$watchCollection(function () { return crossframe.frames; },
+  $scope.$watchCollection(function () { return frameSync.frames; },
     updateViaLink);
 }
 
@@ -4565,7 +3706,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/share_dialog.html":109}],39:[function(require,module,exports){
+},{"../../../templates/client/share_dialog.html":115}],38:[function(require,module,exports){
 'use strict';
 
 // @ngInject
@@ -4605,7 +3746,7 @@ module.exports = {
   Controller: SidebarTutorialController,
 };
 
-},{"../../../templates/client/sidebar_tutorial.html":110}],40:[function(require,module,exports){
+},{"../../../templates/client/sidebar_tutorial.html":116}],39:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -4624,7 +3765,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/sort_dropdown.html":111}],41:[function(require,module,exports){
+},{"../../../templates/client/sort_dropdown.html":117}],40:[function(require,module,exports){
 'use strict';
 
 module.exports = ['$animate', function($animate) {
@@ -4638,7 +3779,7 @@ module.exports = ['$animate', function($animate) {
   };
 }];
 
-},{}],42:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 module.exports = [
   '$compile', function($compile) {
     var STATE_ATTRIBUTE, STATE_LOADING, STATE_SUCCESS, template;
@@ -4675,7 +3816,45 @@ module.exports = [
 ];
 
 
-},{}],43:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
+'use strict';
+
+/**
+ * The <svg-icon> component renders SVG icons using inline <svg> tags,
+ * enabling their appearance to be customized via CSS.
+ *
+ * This matches the way we do icons on the website, see
+ * https://github.com/hypothesis/h/pull/3675
+ */
+
+// The list of supported icons
+SvgIconController.$inject = ["$element"];
+var icons = {
+  refresh: require('../../images/icons/refresh.svg'),
+};
+
+// @ngInject
+function SvgIconController($element) {
+  if (!icons[this.name]) {
+    throw new Error('Unknown icon: ' + this.name);
+  }
+  $element[0].innerHTML = icons[this.name];
+}
+
+module.exports = function () {
+  return {
+    bindToController: true,
+    controllerAs: 'vm',
+    restrict: 'E',
+    controller: SvgIconController,
+    scope: {
+      /** The name of the icon to load. */
+      name: '<',
+    },
+  };
+};
+
+},{"../../images/icons/refresh.svg":1}],43:[function(require,module,exports){
 'use strict';
 
 // @ngInject
@@ -4715,7 +3894,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/tag_editor.html":112}],44:[function(require,module,exports){
+},{"../../../templates/client/tag_editor.html":118}],44:[function(require,module,exports){
 'use strict';
 
 ThreadListController.$inject = ["$scope", "VirtualThreadList"];
@@ -4863,7 +4042,7 @@ module.exports = function () {
   };
 };
 
-},{"../../../templates/client/thread_list.html":113,"../annotation-metadata":2,"../events":50,"../util/scope-timeout":85}],45:[function(require,module,exports){
+},{"../../../templates/client/thread_list.html":119,"../annotation-metadata":3,"../events":50,"../util/scope-timeout":91}],45:[function(require,module,exports){
 'use strict';
 
 TimestampController.$inject = ["$scope", "time"];
@@ -4926,11 +4105,12 @@ module.exports = function () {
   };
 };
 
-},{"../date-util":14}],46:[function(require,module,exports){
+},{"../date-util":13}],46:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
   return {
+    controller: function () {},
     restrict: 'E',
     scope: {
       auth: '<',
@@ -4945,12 +4125,14 @@ module.exports = function () {
       sortKey: '<',
       sortKeysAvailable: '<',
       onChangeSortKey: '&',
+      pendingUpdateCount: '<',
+      onApplyPendingUpdates: '&',
     },
     template: require('../../../templates/client/top_bar.html'),
   };
 };
 
-},{"../../../templates/client/top_bar.html":114}],47:[function(require,module,exports){
+},{"../../../templates/client/top_bar.html":120}],47:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -5107,6 +4289,17 @@ module.exports = Discovery = (function() {
 'use strict';
 
 /**
+ * Return true if a given `draft` is empty and can be discarded without losing
+ * any user input
+ */
+function isEmpty(draft) {
+  if (!draft) {
+    return true;
+  }
+  return !draft.text && draft.tags.length === 0;
+}
+
+/**
  * The drafts service provides temporary storage for unsaved edits to new or
  * existing annotations.
  *
@@ -5145,8 +4338,10 @@ function DraftStore() {
   };
 
   /**
-   * Returns a list of all new annotations (those with no ID) for which
-   * unsaved drafts exist.
+   * Returns a list of local tags of new annotations for which unsaved drafts
+   * exist.
+   *
+   * @return {Array<{$$tag: string}>}
    */
   this.unsaved = function unsaved() {
     return this._drafts.filter(function(draft) {
@@ -5172,12 +4367,21 @@ function DraftStore() {
   };
 
   /**
+   * Returns the draft changes for an annotation, or null if no draft exists
+   * or the draft is empty.
+   */
+  this.getIfNotEmpty = function (model) {
+    var draft = this.get(model);
+    return isEmpty(draft) ? null : draft;
+  };
+
+  /**
    * Update the draft version for a given annotation, replacing any
    * existing draft.
    */
   this.update = function update(model, changes) {
     var newDraft = {
-      model: model,
+      model: {id: model.id, $$tag: model.$$tag},
       isPrivate: changes.isPrivate,
       tags: changes.tags,
       text: changes.text,
@@ -5511,6 +4715,216 @@ RPC.prototype._handle = function (msg) {
 };
 
 },{}],57:[function(require,module,exports){
+'use strict';
+
+FrameSync.$inject = ["$rootScope", "$window", "AnnotationUISync", "Discovery", "annotationUI", "bridge"];
+var events = require('./events');
+var metadata = require('./annotation-metadata');
+
+/**
+ * @typedef FrameInfo
+ * @property {string} uri - Current primary URI of the document being displayed
+ * @property {string[]} searchUris - List of URIs that should be passed to the
+ *           search API when searching for annotations on this document.
+ * @property {string} documentFingerprint - Fingerprint of the document, used
+ *                    for PDFs
+ */
+
+ /**
+  * Return a minimal representation of an annotation that can be sent from the
+  * sidebar app to a connected frame.
+  *
+  * Because this representation will be exposed to untrusted third-party
+  * JavaScript, it includes only the information needed to uniquely identify it
+  * within the current session and anchor it in the document.
+  */
+function formatAnnot(ann) {
+  return {
+    tag: ann.$$tag,
+    msg: {
+      document: ann.document,
+      target: ann.target,
+      uri: ann.uri,
+    },
+  };
+}
+
+/**
+ * This service runs in the sidebar and is responsible for keeping the set of
+ * annotations displayed in connected frames in sync with the set shown in the
+ * sidebar.
+ */
+// @ngInject
+function FrameSync($rootScope, $window, AnnotationUISync, Discovery,
+                   annotationUI, bridge) {
+
+  // List of frames currently connected to the sidebar
+  var frames = [];
+
+  // Set of tags of annotations that are currently loaded into the frame
+  var inFrame = new Set();
+
+  /**
+   * Watch for changes to the set of annotations displayed in the sidebar and
+   * notify connected frames about new/updated/deleted annotations.
+   */
+  function setupSyncToFrame() {
+    // List of loaded annotations in previous state
+    var prevAnnotations = [];
+
+    annotationUI.subscribe(function () {
+      var state = annotationUI.getState();
+      if (state.annotations === prevAnnotations) {
+        return;
+      }
+
+      var inSidebar = new Set();
+      var added = [];
+
+      state.annotations.forEach(function (annot) {
+        if (metadata.isReply(annot)) {
+          // The frame does not need to know about replies
+          return;
+        }
+
+        inSidebar.add(annot.$$tag);
+        if (!inFrame.has(annot.$$tag)) {
+          added.push(annot);
+        }
+      });
+      var deleted = prevAnnotations.filter(function (annot) {
+        return !inSidebar.has(annot.$$tag);
+      });
+      prevAnnotations = state.annotations;
+
+      // We currently only handle adding and removing annotations from the frame
+      // when they are added or removed in the sidebar, but not re-anchoring
+      // annotations if their selectors are updated.
+      if (added.length > 0) {
+        bridge.call('loadAnnotations', added.map(formatAnnot));
+        added.forEach(function (annot) {
+          inFrame.add(annot.$$tag);
+        });
+      }
+      deleted.forEach(function (annot) {
+        bridge.call('deleteAnnotation', formatAnnot(annot));
+        inFrame.delete(annot.$$tag);
+      });
+    });
+  }
+
+  /**
+   * Listen for messages coming in from connected frames and add new annotations
+   * to the sidebar.
+   */
+  function setupSyncFromFrame() {
+    // A new annotation, note or highlight was created in the frame
+    bridge.on('beforeCreateAnnotation', function (event) {
+      inFrame.add(event.tag);
+      var annot = Object.assign({}, event.msg, {$$tag: event.tag});
+      $rootScope.$broadcast(events.BEFORE_ANNOTATION_CREATED, annot);
+    });
+
+    // Anchoring an annotation in the frame completed
+    bridge.on('sync', function (events_) {
+      events_.forEach(function (event) {
+        inFrame.add(event.tag);
+        annotationUI.updateAnchorStatus(null, event.tag, event.msg.$orphan);
+        $rootScope.$broadcast(events.ANNOTATIONS_SYNCED, [event.tag]);
+      });
+    });
+
+    // Create an instance of the AnnotationUISync class which listens for
+    // selection/focus messages from the frame and propagates them to the rest
+    // of the sidebar app.
+    //
+    // FIXME: The frame message listeners from AnnotationUISync should be
+    // extracted and moved here and then the AnnotationUISync class can be
+    // removed entirely.
+    new AnnotationUISync($rootScope, $window, annotationUI, bridge);
+  }
+
+  /**
+   * Query the Hypothesis annotation client in a frame for the URL and metadata
+   * of the document that is currently loaded and add the result to the set of
+   * connected frames.
+   */
+  function addFrame(channel) {
+    channel.call('getDocumentInfo', function (err, info) {
+      var searchUris = [];
+
+      if (err) {
+        channel.destroy();
+      } else {
+        searchUris = [info.uri];
+      }
+
+      var documentFingerprint;
+      if (info.metadata && info.metadata.documentFingerprint) {
+        documentFingerprint = info.metadata.documentFingerprint;
+        searchUris = info.metadata.link.map(function (link) {
+          return link.href;
+        });
+      }
+
+      // The `frames` list is currently stored by this service but should in
+      // future be moved to the app state.
+      $rootScope.$apply(function () {
+        frames.push({
+          uri: info.uri,
+          searchUris: searchUris,
+          documentFingerprint: documentFingerprint,
+        });
+      });
+    });
+  }
+
+  /**
+   * Find and connect to Hypothesis clients in the current window.
+   */
+  this.connect = function () {
+    var discovery = new Discovery(window, {server: true});
+    discovery.startDiscovery(bridge.createChannel.bind(bridge));
+    bridge.onConnect(addFrame);
+
+    setupSyncToFrame();
+    setupSyncFromFrame();
+  };
+
+  /**
+   * Focus annotations with the given tags.
+   *
+   * This is used to indicate the highlight in the document that corresponds to
+   * a given annotation in the sidebar.
+   *
+   * @param {string[]} tags
+   */
+  this.focusAnnotations = function (tags) {
+    bridge.call('focusAnnotations', tags);
+  };
+
+  /**
+   * Scroll the frame to the highlight for an annotation with a given tag.
+   *
+   * @param {string} tag
+   */
+  this.scrollToAnnotation = function (tag) {
+    bridge.call('scrollToAnnotation', tag);
+  };
+
+  /**
+   * List of frames that are connected to the app.
+   * @type {FrameInfo}
+   */
+  this.frames = frames;
+}
+
+module.exports = {
+  default: FrameSync,
+  formatAnnot: formatAnnot,
+};
+
+},{"./annotation-metadata":3,"./events":50}],58:[function(require,module,exports){
 /**
  * @ngdoc service
  * @name  groups
@@ -5621,7 +5035,7 @@ function groups(localStorage, serviceUrl, session, $rootScope, $http) {
 
 module.exports = groups;
 
-},{"./events":50}],58:[function(require,module,exports){
+},{"./events":50}],59:[function(require,module,exports){
 
 /**
  * @ngdoc service
@@ -5677,7 +5091,7 @@ module.exports = [
 ];
 
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 
 /* eslint no-console: "off" */
@@ -5781,7 +5195,7 @@ module.exports = {
   connect: connect,
 };
 
-},{"./websocket":90,"query-string":128}],60:[function(require,module,exports){
+},{"./websocket":96,"query-string":134}],61:[function(require,module,exports){
 module.exports = [
   '$window', function($window) {
     var storage;
@@ -5839,7 +5253,7 @@ module.exports = [
 ];
 
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 
 /**
@@ -6101,7 +5515,7 @@ module.exports = {
   LinkType: LinkType,
 };
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 /**
@@ -6276,7 +5690,7 @@ module.exports = {
   replaceLinksWithEmbeds: replaceLinksWithEmbeds,
 };
 
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 var STORAGE_KEY,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -6459,7 +5873,7 @@ module.exports = [
 ];
 
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 var QueryParser,
   bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
@@ -6589,7 +6003,7 @@ module.exports = QueryParser = (function() {
 })();
 
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 'use strict';
 
 /**
@@ -6666,7 +6080,7 @@ function translateSourceURLs(data) {
 
 function init(config) {
   Raven.config(config.dsn, {
-    release: '0.41.0',  // replaced by versionify
+    release: '0.46.0',  // replaced by versionify
     dataCallback: translateSourceURLs,
   }).install();
   installUnhandledPromiseErrorHandler();
@@ -6764,7 +6178,780 @@ module.exports = {
   report: report,
 };
 
-},{"raven-js":"raven-js","raven-js/plugins/angular":130}],66:[function(require,module,exports){
+},{"raven-js":"raven-js","raven-js/plugins/angular":136}],67:[function(require,module,exports){
+/**
+ * State management for the set of annotations currently loaded into the
+ * sidebar.
+ */
+
+'use strict';
+
+var arrayUtil = require('../util/array-util');
+var metadata = require('../annotation-metadata');
+var uiConstants = require('../ui-constants');
+
+var selection = require('./selection');
+var util = require('./util');
+
+/**
+ * Return a copy of `current` with all matching annotations in `annotations`
+ * removed.
+ */
+function excludeAnnotations(current, annotations) {
+  var ids = {};
+  var tags = {};
+  annotations.forEach(function (annot) {
+    if (annot.id) {
+      ids[annot.id] = true;
+    }
+    if (annot.$$tag) {
+      tags[annot.$$tag] = true;
+    }
+  });
+  return current.filter(function (annot) {
+    var shouldRemove = (annot.id && (annot.id in ids)) ||
+                       (annot.$$tag && (annot.$$tag in tags));
+    return !shouldRemove;
+  });
+}
+
+function findByID(annotations, id) {
+  return annotations.find(function (annot) {
+    return annot.id === id;
+  });
+}
+
+function findByTag(annotations, tag) {
+  return annotations.find(function (annot) {
+    return annot.$$tag === tag;
+  });
+}
+
+/**
+ * Initialize the status flags and properties of a new annotation.
+ */
+function initializeAnnot(annotation, tag) {
+  var orphan = annotation.$orphan;
+
+  if (!annotation.id) {
+    // Currently the user ID, permissions and group of new annotations are
+    // initialized in the <annotation> component controller because the session
+    // state and focused group are not stored in the Redux store. Once they are,
+    // that initialization should be moved here.
+
+    // New annotations must be anchored
+    orphan = false;
+  }
+
+  return Object.assign({}, annotation, {
+    $$tag: annotation.$$tag || tag,
+    $orphan: orphan,
+  });
+}
+
+function init() {
+  return {
+    annotations: [],
+
+    // The local tag to assign to the next annotation that is loaded into the
+    // app
+    nextTag: 1,
+  };
+}
+
+var update = {
+  ADD_ANNOTATIONS: function (state, action) {
+    var updatedIDs = {};
+    var updatedTags = {};
+
+    var added = [];
+    var unchanged = [];
+    var updated = [];
+    var nextTag = state.nextTag;
+
+    action.annotations.forEach(function (annot) {
+      var existing;
+      if (annot.id) {
+        existing = findByID(state.annotations, annot.id);
+      }
+      if (!existing && annot.$$tag) {
+        existing = findByTag(state.annotations, annot.$$tag);
+      }
+
+      if (existing) {
+        // Merge the updated annotation with the private fields from the local
+        // annotation
+        updated.push(Object.assign({}, existing, annot));
+        if (annot.id) {
+          updatedIDs[annot.id] = true;
+        }
+        if (existing.$$tag) {
+          updatedTags[existing.$$tag] = true;
+        }
+      } else {
+        added.push(initializeAnnot(annot, 't' + nextTag));
+        ++nextTag;
+      }
+    });
+
+    state.annotations.forEach(function (annot) {
+      if (!updatedIDs[annot.id] && !updatedTags[annot.$$tag]) {
+        unchanged.push(annot);
+      }
+    });
+
+    return {
+      annotations: added.concat(updated).concat(unchanged),
+      nextTag: nextTag,
+    };
+  },
+
+  REMOVE_ANNOTATIONS: function (state, action) {
+    var annots = excludeAnnotations(state.annotations, action.annotations);
+    var selectedTab = state.selectedTab;
+    if (selectedTab === uiConstants.TAB_ORPHANS &&
+        arrayUtil.countIf(annots, metadata.isOrphan) === 0) {
+      selectedTab = uiConstants.TAB_ANNOTATIONS;
+    }
+
+    var tabUpdateFn = selection.update.SELECT_TAB;
+    return Object.assign(
+      {annotations: annots},
+      tabUpdateFn(state, selection.actions.selectTab(selectedTab))
+    );
+  },
+
+  CLEAR_ANNOTATIONS: function () {
+    return {annotations: []};
+  },
+
+  UPDATE_ANCHOR_STATUS: function (state, action) {
+    var annotations = state.annotations.map(function (annot) {
+      var match = (annot.id && annot.id === action.id) ||
+                  (annot.$$tag && annot.$$tag === action.tag);
+      if (match) {
+        return Object.assign({}, annot, {
+          $orphan: action.isOrphan,
+          $$tag: action.tag,
+        });
+      } else {
+        return annot;
+      }
+    });
+    return {annotations: annotations};
+  },
+};
+
+var actions = util.actionTypes(update);
+
+/** Add annotations to the currently displayed set. */
+function addAnnotations(annotations, now) {
+  now = now || new Date();
+
+  // Add dates to new annotations. These are ignored by the server but used
+  // when sorting unsaved annotation cards.
+  annotations = annotations.map(function (annot) {
+    if (annot.id) { return annot; }
+    return Object.assign({
+      // Copy $$tag explicitly because it is non-enumerable.
+      //
+      // FIXME: change $$tag to $tag and make it enumerable so annotations
+      // can be handled more simply in the sidebar.
+      $$tag: annot.$$tag,
+      // Date.prototype.toISOString returns a 0-offset (UTC) ISO8601
+      // datetime.
+      created: now.toISOString(),
+      updated: now.toISOString(),
+    }, annot);
+  });
+
+  return function (dispatch, getState) {
+    var added = annotations.filter(function (annot) {
+      return !findByID(getState().annotations, annot.id);
+    });
+
+    dispatch({
+      type: actions.ADD_ANNOTATIONS,
+      annotations: annotations,
+    });
+
+    if (!getState().isSidebar) {
+      return;
+    }
+
+    // If anchoring fails to complete in a reasonable amount of time, then
+    // we assume that the annotation failed to anchor. If it does later
+    // successfully anchor then the status will be updated.
+    var ANCHORING_TIMEOUT = 500;
+
+    var anchoringAnnots = added.filter(metadata.isWaitingToAnchor);
+    if (anchoringAnnots.length) {
+      setTimeout(function () {
+        arrayUtil
+          .filterMap(anchoringAnnots, function (annot) {
+            return findByID(getState().annotations, annot.id);
+          })
+          .filter(metadata.isWaitingToAnchor)
+          .forEach(function (orphan) {
+            dispatch({
+              type: actions.UPDATE_ANCHOR_STATUS,
+              id: orphan.id,
+              tag: orphan.$$tag,
+              isOrphan: true,
+            });
+          });
+      }, ANCHORING_TIMEOUT);
+    }
+  };
+}
+
+/** Remove annotations from the currently displayed set. */
+function removeAnnotations(annotations) {
+  return {
+    type: actions.REMOVE_ANNOTATIONS,
+    annotations: annotations,
+  };
+}
+
+/** Set the currently displayed annotations to the empty set. */
+function clearAnnotations() {
+  return {type: actions.CLEAR_ANNOTATIONS};
+}
+
+/**
+ * Updating the local tag and anchoring status of an annotation.
+ *
+ * @param {string|null} id - Annotation ID
+ * @param {string} tag - The local tag assigned to this annotation to link
+ *        the object in the page and the annotation in the sidebar
+ * @param {boolean} isOrphan - True if the annotation failed to anchor
+ */
+function updateAnchorStatus(id, tag, isOrphan) {
+  return {
+    type: actions.UPDATE_ANCHOR_STATUS,
+    id: id,
+    tag: tag,
+    isOrphan: isOrphan,
+  };
+}
+
+/**
+ * Return all loaded annotations which have been saved to the server.
+ *
+ * @param {state} - The global app state
+ */
+function savedAnnotations(state) {
+  return state.annotations.filter(function (ann) {
+    return !metadata.isNew(ann);
+  });
+}
+
+/** Return true if the annotation with a given ID is currently loaded. */
+function annotationExists(state, id) {
+  return state.annotations.some(function (annot) {
+    return annot.id === id;
+  });
+}
+
+module.exports = {
+  init: init,
+  update: update,
+  actions: {
+    addAnnotations: addAnnotations,
+    clearAnnotations: clearAnnotations,
+    removeAnnotations: removeAnnotations,
+    updateAnchorStatus: updateAnchorStatus,
+  },
+
+  // Selectors
+  annotationExists: annotationExists,
+  savedAnnotations: savedAnnotations,
+};
+
+},{"../annotation-metadata":3,"../ui-constants":87,"../util/array-util":89,"./selection":69,"./util":70}],68:[function(require,module,exports){
+'use strict';
+
+/**
+ * This module defines the main update function (or 'reducer' in Redux's
+ * terminology) that handles app state updates. For an overview of how state
+ * management in Redux works, see the comments at the top of `annotation-ui.js`
+ *
+ * Each sub-module in this folder defines:
+ *
+ *  - An `init` function that returns the initial state relating to some aspect
+ *    of the application
+ *  - An `update` object mapping action types to a state update function for
+ *    that action
+ *  - A set of action creators - functions that return actions that can then
+ *    be passed to `store.dispatch()`
+ *  - A set of selectors - Utility functions that calculate some derived data
+ *    from the state
+ */
+
+var annotations = require('./annotations');
+var selection = require('./selection');
+var viewer = require('./viewer');
+var util = require('./util');
+
+function init(settings) {
+  return Object.assign(
+    {},
+    annotations.init(),
+    selection.init(settings),
+    viewer.init()
+  );
+}
+
+var update = util.createReducer(Object.assign(
+  annotations.update,
+  selection.update,
+  viewer.update
+));
+
+module.exports = {
+  init: init,
+  update: update,
+};
+
+},{"./annotations":67,"./selection":69,"./util":70,"./viewer":71}],69:[function(require,module,exports){
+/**
+ * This module handles state related to the current sort, search and filter
+ * settings in the UI, including:
+ *
+ * - The set of annotations that are currently focused (hovered) or selected
+ * - The selected tab
+ * - The current sort order
+ * - The current filter query
+ */
+
+'use strict';
+
+var immutable = require('seamless-immutable');
+
+var uiConstants = require('../ui-constants');
+
+var util = require('./util');
+
+/**
+* Default starting tab.
+*/
+var TAB_DEFAULT = uiConstants.TAB_ANNOTATIONS;
+
+ /**
+  * Default sort keys for each tab.
+  */
+var TAB_SORTKEY_DEFAULT = {};
+TAB_SORTKEY_DEFAULT[uiConstants.TAB_ANNOTATIONS] = 'Location';
+TAB_SORTKEY_DEFAULT[uiConstants.TAB_NOTES] = 'Oldest';
+TAB_SORTKEY_DEFAULT[uiConstants.TAB_ORPHANS] = 'Location';
+
+/**
+ * Available sort keys for each tab.
+ */
+var TAB_SORTKEYS_AVAILABLE = {};
+TAB_SORTKEYS_AVAILABLE[uiConstants.TAB_ANNOTATIONS] = ['Newest', 'Oldest', 'Location'];
+TAB_SORTKEYS_AVAILABLE[uiConstants.TAB_NOTES] = ['Newest', 'Oldest'];
+TAB_SORTKEYS_AVAILABLE[uiConstants.TAB_ORPHANS] = ['Newest', 'Oldest', 'Location'];
+
+function initialSelection(settings) {
+  var selection = {};
+  if (settings.annotations) {
+    selection[settings.annotations] = true;
+  }
+  return freeze(selection);
+}
+
+function freeze(selection) {
+  if (Object.keys(selection).length) {
+    return immutable(selection);
+  } else {
+    return null;
+  }
+}
+
+function toSet(list) {
+  return list.reduce(function (set, key) {
+    set[key] = true;
+    return set;
+  }, {});
+}
+
+function init(settings) {
+  return {
+    // Contains a map of annotation tag:true pairs.
+    focusedAnnotationMap: null,
+
+    // Contains a map of annotation id:true pairs.
+    selectedAnnotationMap: initialSelection(settings),
+
+    // Map of annotation IDs to expanded/collapsed state. For annotations not
+    // present in the map, the default state is used which depends on whether
+    // the annotation is a top-level annotation or a reply, whether it is
+    // selected and whether it matches the current filter.
+    expanded: initialSelection(settings) || {},
+
+    // Set of IDs of annotations that have been explicitly shown
+    // by the user even if they do not match the current search filter
+    forceVisible: {},
+
+    // IDs of annotations that should be highlighted
+    highlighted: [],
+
+    filterQuery: null,
+
+    selectedTab: TAB_DEFAULT,
+
+    // Key by which annotations are currently sorted.
+    sortKey: TAB_SORTKEY_DEFAULT[TAB_DEFAULT],
+    // Keys by which annotations can be sorted.
+    sortKeysAvailable: TAB_SORTKEYS_AVAILABLE[TAB_DEFAULT],
+  };
+}
+
+var update = {
+  CLEAR_SELECTION: function () {
+    return {filterQuery: null, selectedAnnotationMap: null};
+  },
+
+  SELECT_ANNOTATIONS: function (state, action) {
+    return {selectedAnnotationMap: action.selection};
+  },
+
+  FOCUS_ANNOTATIONS: function (state, action) {
+    return {focusedAnnotationMap: action.focused};
+  },
+
+  SET_FORCE_VISIBLE: function (state, action) {
+    return {forceVisible: action.forceVisible};
+  },
+
+  SET_EXPANDED: function (state, action) {
+    return {expanded: action.expanded};
+  },
+
+  HIGHLIGHT_ANNOTATIONS: function (state, action) {
+    return {highlighted: action.highlighted};
+  },
+
+  SELECT_TAB: function (state, action) {
+    // Do nothing if the "new tab" is not a valid tab.
+    if ([uiConstants.TAB_ANNOTATIONS,
+        uiConstants.TAB_NOTES,
+        uiConstants.TAB_ORPHANS].indexOf(action.tab) === -1) {
+      return {};
+    }
+    // Shortcut if the tab is already correct, to avoid resetting the sortKey
+    // unnecessarily.
+    if (state.selectedTab === action.tab) {
+      return {};
+    }
+    return {
+      selectedTab: action.tab,
+      sortKey: TAB_SORTKEY_DEFAULT[action.tab],
+      sortKeysAvailable: TAB_SORTKEYS_AVAILABLE[action.tab],
+    };
+  },
+
+  SET_FILTER_QUERY: function (state, action) {
+    return {
+      filterQuery: action.query,
+      forceVisible: {},
+      expanded: {},
+    };
+  },
+
+  SET_SORT_KEY: function (state, action) {
+    return {sortKey: action.key};
+  },
+};
+
+var actions = util.actionTypes(update);
+
+function select(annotations) {
+  return {
+    type: actions.SELECT_ANNOTATIONS,
+    selection: freeze(annotations),
+  };
+}
+
+/**
+ * Set the currently selected annotation IDs.
+ */
+function selectAnnotations(ids) {
+  return select(toSet(ids));
+}
+
+/** Toggle whether annotations are selected or not. */
+function toggleSelectedAnnotations(ids) {
+  return function (dispatch, getState) {
+    var selection = Object.assign({}, getState().selectedAnnotationMap);
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i];
+      if (selection[id]) {
+        delete selection[id];
+      } else {
+        selection[id] = true;
+      }
+    }
+    dispatch(select(selection));
+  };
+}
+
+/**
+ * Sets whether a given annotation should be visible, even if it does not
+ * match the current search query.
+ *
+ * @param {string} id - Annotation ID
+ * @param {boolean} visible
+ */
+function setForceVisible(id, visible) {
+  // FIXME: This should be converted to a plain action and accessing the state
+  // should happen in the update() function
+  return function (dispatch, getState) {
+    var forceVisible = Object.assign({}, getState().forceVisible);
+    forceVisible[id] = visible;
+    dispatch({
+      type: actions.SET_FORCE_VISIBLE,
+      forceVisible: forceVisible,
+    });
+  };
+}
+
+/**
+ * Sets which annotations are currently focused.
+ *
+ * @param {Array<string>} Tags of annotations to focus
+ */
+function focusAnnotations(tags) {
+  return {
+    type: actions.FOCUS_ANNOTATIONS,
+    focused: freeze(toSet(tags)),
+  };
+}
+
+function setCollapsed(id, collapsed) {
+  // FIXME: This should be converted to a plain action and accessing the state
+  // should happen in the update() function
+  return function (dispatch, getState) {
+    var expanded = Object.assign({}, getState().expanded);
+    expanded[id] = !collapsed;
+    dispatch({
+      type: actions.SET_EXPANDED,
+      expanded: expanded,
+    });
+  };
+}
+
+/**
+ * Highlight annotations with the given `ids`.
+ *
+ * This is used to indicate the specific annotation in a thread that was
+ * linked to for example.
+ */
+function highlightAnnotations(ids) {
+  return {
+    type: actions.HIGHLIGHT_ANNOTATIONS,
+    highlighted: ids,
+  };
+}
+
+
+/** Set the type annotations to be displayed. */
+function selectTab(type) {
+  return {
+    type: actions.SELECT_TAB,
+    tab: type,
+  };
+}
+
+/** Set the query used to filter displayed annotations. */
+function setFilterQuery(query) {
+  return {
+    type: actions.SET_FILTER_QUERY,
+    query: query,
+  };
+}
+
+/** Sets the sort key for the annotation list. */
+function setSortKey(key) {
+  return {
+    type: actions.SET_SORT_KEY,
+    key: key,
+  };
+}
+
+/**
+ * Returns true if the annotation with the given `id` is selected.
+ */
+function isAnnotationSelected(state, id) {
+  return (state.selectedAnnotationMap || {}).hasOwnProperty(id);
+}
+
+/**
+ * Return true if any annotations are currently selected.
+ */
+function hasSelectedAnnotations(state) {
+  return !!state.selectedAnnotationMap;
+}
+
+/** De-select an annotation. */
+function removeSelectedAnnotation(id) {
+  // FIXME: This should be converted to a plain action and accessing the state
+  // should happen in the update() function
+  return function (dispatch, getState) {
+    var selection = Object.assign({}, getState().selectedAnnotationMap);
+    if (!selection || !id) {
+      return;
+    }
+    delete selection[id];
+    dispatch(select(selection));
+  };
+}
+
+/** De-select all annotations. */
+function clearSelectedAnnotations() {
+  return {type: actions.CLEAR_SELECTION};
+}
+
+module.exports = {
+  init: init,
+  update: update,
+
+  actions: {
+    clearSelectedAnnotations: clearSelectedAnnotations,
+    focusAnnotations: focusAnnotations,
+    highlightAnnotations: highlightAnnotations,
+    removeSelectedAnnotation: removeSelectedAnnotation,
+    selectAnnotations: selectAnnotations,
+    selectTab: selectTab,
+    setCollapsed: setCollapsed,
+    setFilterQuery: setFilterQuery,
+    setForceVisible: setForceVisible,
+    setSortKey: setSortKey,
+    toggleSelectedAnnotations: toggleSelectedAnnotations,
+  },
+
+  // Selectors
+  hasSelectedAnnotations: hasSelectedAnnotations,
+  isAnnotationSelected: isAnnotationSelected,
+};
+
+},{"../ui-constants":87,"./util":70,"seamless-immutable":153}],70:[function(require,module,exports){
+'use strict';
+
+/**
+ * Return an object where each key in `updateFns` is mapped to the key itself.
+ */
+function actionTypes(updateFns) {
+  return Object.keys(updateFns).reduce(function (types, key) {
+    types[key] = key;
+    return types;
+  }, {});
+}
+
+/**
+ * Given an object which maps action names to update functions, this returns
+ * a reducer function that can be passed to the redux `createStore` function.
+ */
+function createReducer(updateFns) {
+  return function (state, action) {
+    var fn = updateFns[action.type];
+    if (!fn) {
+      return state;
+    }
+    return Object.assign({}, state, fn(state, action));
+  };
+}
+
+/**
+ * Takes an object mapping keys to selector functions and the `getState()`
+ * function from the store and returns an object with the same keys but where
+ * the values are functions that call the original functions with the `state`
+ * argument set to the current value of `getState()`
+ */
+function bindSelectors(selectors, getState) {
+  return Object.keys(selectors).reduce(function (bound, key) {
+    var selector = selectors[key];
+    bound[key] = function () {
+      var args = [].slice.apply(arguments);
+      args.unshift(getState());
+      return selector.apply(null, args);
+    };
+    return bound;
+  }, {});
+}
+
+module.exports = {
+  actionTypes: actionTypes,
+  bindSelectors: bindSelectors,
+  createReducer: createReducer,
+};
+
+},{}],71:[function(require,module,exports){
+'use strict';
+
+var util = require('./util');
+
+/**
+ * This module defines actions and state related to the display mode of the
+ * sidebar.
+ */
+
+function init() {
+  return {
+    // Flag that indicates whether the app is the sidebar and connected to
+    // a page where annotations are being shown in context
+    isSidebar: true,
+
+    visibleHighlights: false,
+  };
+}
+
+var update = {
+  SET_SIDEBAR: function (state, action) {
+    return {isSidebar: action.isSidebar};
+  },
+  SET_HIGHLIGHTS_VISIBLE: function (state, action) {
+    return {visibleHighlights: action.visible};
+  },
+};
+
+var actions = util.actionTypes(update);
+
+/** Set whether the app is the sidebar */
+function setAppIsSidebar(isSidebar) {
+  return {type: actions.SET_SIDEBAR, isSidebar: isSidebar};
+}
+
+/**
+ * Sets whether annotation highlights in connected documents are shown
+ * or not.
+ */
+function setShowHighlights(show) {
+  return {type: actions.SET_HIGHLIGHTS_VISIBLE, visible: show};
+}
+
+/**
+ * Returns true if the app is being used as the sidebar in the annotation
+ * client, as opposed to the standalone annotation page or stream views.
+ */
+function isSidebar(state) {
+  return state.isSidebar;
+}
+
+module.exports = {
+  init: init,
+  update: update,
+  actions: {
+    setAppIsSidebar: setAppIsSidebar,
+    setShowHighlights: setShowHighlights,
+  },
+
+  // Selectors
+  isSidebar: isSidebar,
+};
+
+},{"./util":70}],72:[function(require,module,exports){
 'use strict';
 
 var escapeHtml = require('escape-html');
@@ -6896,7 +7083,7 @@ function renderMathAndMarkdown(markdown, sanitizeFn) {
 
 module.exports = renderMathAndMarkdown;
 
-},{"escape-html":118,"katex":"katex","showdown":"showdown"}],67:[function(require,module,exports){
+},{"escape-html":124,"katex":"katex","showdown":"showdown"}],73:[function(require,module,exports){
 'use strict';
 
 var retry = require('retry');
@@ -6931,10 +7118,10 @@ module.exports = {
   retryPromiseOperation: retryPromiseOperation,
 };
 
-},{"retry":142}],68:[function(require,module,exports){
+},{"retry":149}],74:[function(require,module,exports){
 'use strict';
 
-RootThread.$inject = ["$rootScope", "annotationUI", "features", "searchFilter", "viewFilter"];
+RootThread.$inject = ["$rootScope", "annotationUI", "drafts", "features", "searchFilter", "viewFilter"];
 var buildThread = require('./build-thread');
 var events = require('./events');
 var memoize = require('./util/memoize');
@@ -6974,7 +7161,7 @@ var sortFns = {
  * The root thread is then displayed by viewer.html
  */
 // @ngInject
-function RootThread($rootScope, annotationUI, features, searchFilter, viewFilter) {
+function RootThread($rootScope, annotationUI, drafts, features, searchFilter, viewFilter) {
 
   /**
    * Build the root conversation thread from the given UI state.
@@ -7041,38 +7228,47 @@ function RootThread($rootScope, annotationUI, features, searchFilter, viewFilter
     });
   }
 
+  function deleteNewAndEmptyAnnotations() {
+    annotationUI.getState().annotations.filter(function (ann) {
+      return metadata.isNew(ann) && !drafts.getIfNotEmpty(ann);
+    }).forEach(function (ann) {
+      drafts.remove(ann);
+      $rootScope.$broadcast(events.ANNOTATION_DELETED, ann);
+    });
+  }
+
   // Listen for annotations being created or loaded
   // and show them in the UI.
   //
   // Note: These events could all be converted into actions that are handled by
   // the Redux store in annotationUI.
-  var loadEvents = [events.BEFORE_ANNOTATION_CREATED,
-                    events.ANNOTATION_CREATED,
+  var loadEvents = [events.ANNOTATION_CREATED,
                     events.ANNOTATION_UPDATED,
                     events.ANNOTATIONS_LOADED];
   loadEvents.forEach(function (event) {
     $rootScope.$on(event, function (event, annotation) {
-      var annotations = [].concat(annotation);
+      annotationUI.addAnnotations([].concat(annotation));
+    });
+  });
 
-      // Add or update annotations
-      annotationUI.addAnnotations(annotations);
+  $rootScope.$on(events.BEFORE_ANNOTATION_CREATED, function (event, ann) {
+    // When a new annotation is created, remove any existing annotations
+    // that are empty.
+    deleteNewAndEmptyAnnotations();
 
-      // Ensure that newly created annotations are always visible
-      if (event.name === events.BEFORE_ANNOTATION_CREATED) {
+    annotationUI.addAnnotations([ann]);
 
-        // If the annotation is of type note or annotation, make sure
-        // the appropriate tab is selected. If it is of type reply, user
-        // stays in the selected tab.
-        if (metadata.isPageNote(annotation)) {
-          annotationUI.selectTab(uiConstants.TAB_NOTES);
-        } else if (metadata.isAnnotation(annotation)) {
-          annotationUI.selectTab(uiConstants.TAB_ANNOTATIONS);
-        }
+    // If the annotation is of type note or annotation, make sure
+    // the appropriate tab is selected. If it is of type reply, user
+    // stays in the selected tab.
+    if (metadata.isPageNote(ann)) {
+      annotationUI.selectTab(uiConstants.TAB_NOTES);
+    } else if (metadata.isAnnotation(ann)) {
+      annotationUI.selectTab(uiConstants.TAB_ANNOTATIONS);
+    }
 
-        (annotation.references || []).forEach(function (parent) {
-          annotationUI.setCollapsed(parent, false);
-        });
-      }
+    (ann.references || []).forEach(function (parent) {
+      annotationUI.setCollapsed(parent, false);
     });
   });
 
@@ -7085,6 +7281,24 @@ function RootThread($rootScope, annotationUI, features, searchFilter, viewFilter
     annotationUI.removeAnnotations(annotations);
   });
 
+  // Once the focused group state is moved to the app state store, then the
+  // logic in this event handler can be moved to the annotations reducer.
+  $rootScope.$on(events.GROUP_FOCUSED, function (event, focusedGroupId) {
+    var updatedAnnots = annotationUI.getState().annotations.filter(function (ann) {
+      return metadata.isNew(ann) && !metadata.isReply(ann);
+    }).map(function (ann) {
+      return Object.assign(ann, {
+        // FIXME - $$tag is currently a non-enumerable property so it has to be
+        // copied explicitly
+        $$tag: ann.$$tag,
+        group: focusedGroupId,
+      });
+    });
+    if (updatedAnnots.length > 0) {
+      annotationUI.addAnnotations(updatedAnnots);
+    }
+  });
+
   /**
    * Build the root conversation thread from the given UI state.
    * @return {Thread}
@@ -7094,7 +7308,7 @@ function RootThread($rootScope, annotationUI, features, searchFilter, viewFilter
 
 module.exports = RootThread;
 
-},{"./annotation-metadata":2,"./build-thread":12,"./events":50,"./ui-constants":81,"./util/memoize":84}],69:[function(require,module,exports){
+},{"./annotation-metadata":3,"./build-thread":12,"./events":50,"./ui-constants":87,"./util/memoize":90}],75:[function(require,module,exports){
 'use strict';
 
 var EventEmitter = require('tiny-emitter');
@@ -7146,8 +7360,14 @@ SearchClient.prototype._getBatch = function (query, offset) {
       self._results = self._results.concat(chunk);
     }
 
+    // Check if there are additional pages of results to fetch. In addition to
+    // checking the `total` figure from the server, we also require that at
+    // least one result was returned in the current page, otherwise we would
+    // end up repeating the same query for the next page. If the server's
+    // `total` count is incorrect for any reason, that will lead to the client
+    // polling the server indefinitely.
     var nextOffset = offset + results.rows.length;
-    if (results.total > nextOffset) {
+    if (results.total > nextOffset && chunk.length > 0) {
       self._getBatch(query, nextOffset);
     } else {
       if (!self._incremental) {
@@ -7194,7 +7414,7 @@ SearchClient.prototype.cancel = function () {
 
 module.exports = SearchClient;
 
-},{"inherits":120,"tiny-emitter":150}],70:[function(require,module,exports){
+},{"inherits":126,"tiny-emitter":157}],76:[function(require,module,exports){
 var SearchFilter;
 
 module.exports = SearchFilter = (function() {
@@ -7389,7 +7609,7 @@ module.exports = SearchFilter = (function() {
 })();
 
 
-},{}],71:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 'use strict';
 
 serviceUrl.$inject = ["settings"];
@@ -7438,7 +7658,7 @@ function serviceUrl(settings) {
 
 module.exports = serviceUrl;
 
-},{"./util/url-util":86}],72:[function(require,module,exports){
+},{"./util/url-util":92}],78:[function(require,module,exports){
 'use strict';
 
 session.$inject = ["$http", "$resource", "$rootScope", "flash", "raven", "settings"];
@@ -7630,7 +7850,7 @@ function session($http, $resource, $rootScope, flash, raven, settings) {
 
 module.exports = session;
 
-},{"./events":50,"./retry-util":67,"angular":"angular"}],73:[function(require,module,exports){
+},{"./events":50,"./retry-util":73,"angular":"angular"}],79:[function(require,module,exports){
 'use strict';
 
 /**
@@ -7661,7 +7881,7 @@ function settings(document, settingsClass) {
 
 module.exports = settings;
 
-},{}],74:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 'use strict';
 
 store.$inject = ["$http", "settings"];
@@ -7793,7 +8013,7 @@ function store($http, settings) {
 
 module.exports = store;
 
-},{"./retry-util":67,"./util/url-util":86,"lodash.get":124}],75:[function(require,module,exports){
+},{"./retry-util":73,"./util/url-util":92,"lodash.get":130}],81:[function(require,module,exports){
 var StreamController, angular;
 
 angular = require('angular');
@@ -7868,7 +8088,7 @@ module.exports = StreamController = (function() {
 })();
 
 
-},{"angular":"angular"}],76:[function(require,module,exports){
+},{"angular":"angular"}],82:[function(require,module,exports){
 var StreamFilter;
 
 module.exports = StreamFilter = (function() {
@@ -7995,12 +8215,13 @@ module.exports = StreamFilter = (function() {
 })();
 
 
-},{}],77:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 'use strict';
 
-Streamer.$inject = ["$rootScope", "annotationMapper", "groups", "session", "settings"];
+Streamer.$inject = ["$rootScope", "annotationMapper", "annotationUI", "features", "groups", "session", "settings"];
 var uuid = require('node-uuid');
 
+var events = require('./events');
 var Socket = require('./websocket');
 
 /**
@@ -8017,7 +8238,8 @@ var Socket = require('./websocket');
  * @param settings - Application settings
  */
 // @ngInject
-function Streamer($rootScope, annotationMapper, groups, session, settings) {
+function Streamer($rootScope, annotationMapper, annotationUI, features, groups,
+                  session, settings) {
   // The randomly generated session UUID
   var clientId = uuid.v4();
 
@@ -8028,33 +8250,62 @@ function Streamer($rootScope, annotationMapper, groups, session, settings) {
   // established.
   var configMessages = {};
 
+  // The streamer maintains a set of pending updates and deletions which have
+  // been received via the WebSocket but not yet applied to the contents of the
+  // app.
+  //
+  // This state should be managed as part of the global app state in
+  // annotationUI, but that is currently difficult because applying updates
+  // requires filtering annotations against the focused group (information not
+  // currently stored in the app state) and triggering events in order to update
+  // the annotations displayed in the page.
+
+  // Map of ID -> updated annotation for updates that have been received over
+  // the WS but not yet applied
+  var pendingUpdates = {};
+  // Set of IDs of annotations which have been deleted but for which the
+  // deletion has not yet been applied
+  var pendingDeletions = {};
+
   function handleAnnotationNotification(message) {
     var action = message.options.action;
     var annotations = message.payload;
-
-    if (annotations.length === 0) {
-      return;
-    }
-
-    // Discard annotations that aren't from the currently focused group.
-    // Unless the action is delete, where we only get an id
-    // FIXME: Have the server only send us annotations from the focused
-    // group in the first place.
-    if (action !== 'delete') {
-      annotations = annotations.filter(function (ann) {
-        return ann.group === groups.focused().id;
-      });
-    }
 
     switch (action) {
     case 'create':
     case 'update':
     case 'past':
-      annotationMapper.loadAnnotations(annotations);
+      annotations.forEach(function (ann) {
+        // In the sidebar, only save pending updates for annotations in the
+        // focused group, since we only display annotations from the focused
+        // group and reload all annotations and discard pending updates
+        // when switching groups.
+        if (ann.group === groups.focused().id || !annotationUI.isSidebar()) {
+          pendingUpdates[ann.id] = ann;
+        }
+      });
       break;
     case 'delete':
-      annotationMapper.unloadAnnotations(annotations);
+      annotations.forEach(function (ann) {
+        // Discard any pending but not-yet-applied updates for this annotation
+        delete pendingUpdates[ann.id];
+
+        // If we already have this annotation loaded, then record a pending
+        // deletion. We do not check the group of the annotation here because a)
+        // that information is not included with deletion notifications and b)
+        // even if the annotation is from the current group, it might be for a
+        // new annotation (saved in pendingUpdates and removed above), that has
+        // not yet been loaded.
+        if (annotationUI.annotationExists(ann.id)) {
+          pendingDeletions[ann.id] = true;
+        }
+      });
       break;
+    }
+
+    if (!features.flagEnabled('defer_realtime_updates') ||
+        !annotationUI.isSidebar()) {
+      applyPendingUpdates();
     }
   }
 
@@ -8154,6 +8405,61 @@ function Streamer($rootScope, annotationMapper, groups, session, settings) {
     _connect();
   };
 
+  function applyPendingUpdates() {
+    var updates = Object.values(pendingUpdates);
+    var deletions = Object.keys(pendingDeletions).map(function (id) {
+      return {id: id};
+    });
+
+    if (updates.length) {
+      annotationMapper.loadAnnotations(updates);
+    }
+    if (deletions.length) {
+      annotationMapper.unloadAnnotations(deletions);
+    }
+
+    pendingUpdates = {};
+    pendingDeletions = {};
+  }
+
+  function countPendingUpdates() {
+    return Object.keys(pendingUpdates).length +
+           Object.keys(pendingDeletions).length;
+  }
+
+  function hasPendingDeletion(id) {
+    return pendingDeletions.hasOwnProperty(id);
+  }
+
+  function removePendingUpdates(event, anns) {
+    if (!Array.isArray(anns)) {
+      anns = [anns];
+    }
+    anns.forEach(function (ann) {
+      delete pendingUpdates[ann.id];
+      delete pendingDeletions[ann.id];
+    });
+  }
+
+  function clearPendingUpdates() {
+    pendingUpdates = {};
+    pendingDeletions = {};
+  }
+
+  var updateEvents = [
+    events.ANNOTATION_DELETED,
+    events.ANNOTATION_UPDATED,
+    events.ANNOTATIONS_UNLOADED,
+  ];
+
+  updateEvents.forEach(function (event) {
+    $rootScope.$on(event, removePendingUpdates);
+  });
+  $rootScope.$on(events.GROUP_FOCUSED, clearPendingUpdates);
+
+  this.applyPendingUpdates = applyPendingUpdates;
+  this.countPendingUpdates = countPendingUpdates;
+  this.hasPendingDeletion = hasPendingDeletion;
   this.clientId = clientId;
   this.configMessages = configMessages;
   this.connect = connect;
@@ -8163,7 +8469,7 @@ function Streamer($rootScope, annotationMapper, groups, session, settings) {
 
 module.exports = Streamer;
 
-},{"./websocket":90,"node-uuid":125}],78:[function(require,module,exports){
+},{"./events":50,"./websocket":96,"node-uuid":131}],84:[function(require,module,exports){
 'use strict';
 
 var metadata = require('./annotation-metadata');
@@ -8195,7 +8501,7 @@ function tabCounts(annotations, opts) {
 
 module.exports = tabCounts;
 
-},{"./annotation-metadata":2,"./util/array-util":83}],79:[function(require,module,exports){
+},{"./annotation-metadata":3,"./util/array-util":89}],85:[function(require,module,exports){
 module.exports = [
   'localStorage', function(localStorage) {
     var TAGS_LIST_KEY, TAGS_MAP_KEY;
@@ -8258,7 +8564,7 @@ module.exports = [
 ];
 
 
-},{}],80:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 'use strict';
 
 var minute = 60;
@@ -8481,7 +8787,7 @@ module.exports = {
   toFuzzyString: toFuzzyString,
 };
 
-},{}],81:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 'use strict';
 
 /**
@@ -8494,7 +8800,7 @@ module.exports = {
   TAB_ORPHANS: 'orphan',
 };
 
-},{}],82:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 var COMBINING_MARKS, unorm;
 
 unorm = require('unorm');
@@ -8513,7 +8819,7 @@ module.exports = function() {
 };
 
 
-},{"unorm":"unorm"}],83:[function(require,module,exports){
+},{"unorm":"unorm"}],89:[function(require,module,exports){
 'use strict';
 
 /**
@@ -8552,7 +8858,7 @@ module.exports = {
   filterMap: filterMap,
 };
 
-},{}],84:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 'use strict';
 
 /**
@@ -8582,7 +8888,7 @@ function memoize(fn) {
 
 module.exports = memoize;
 
-},{}],85:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 'use strict';
 
 /**
@@ -8612,7 +8918,7 @@ module.exports = function ($scope, fn, delay, setTimeoutFn, clearTimeoutFn) {
   });
 };
 
-},{}],86:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 'use strict';
 
 /**
@@ -8644,7 +8950,7 @@ module.exports = {
   replaceURLParams: replaceURLParams,
 };
 
-},{}],87:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 /*
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
@@ -9153,7 +9459,7 @@ angular.module('ui.bootstrap.position', [])
   }]);
 
 
-},{}],88:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 var indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 module.exports = [
@@ -9393,7 +9699,7 @@ module.exports = [
 ];
 
 
-},{}],89:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 'use strict';
 
 var EventEmitter = require('tiny-emitter');
@@ -9562,7 +9868,7 @@ VirtualThreadList.prototype._updateVisibleThreads = function () {
 
 module.exports = VirtualThreadList;
 
-},{"inherits":120,"lodash.debounce":123,"tiny-emitter":150}],90:[function(require,module,exports){
+},{"inherits":126,"lodash.debounce":129,"tiny-emitter":157}],96:[function(require,module,exports){
 'use strict';
 
 var retry = require('retry');
@@ -9696,7 +10002,7 @@ inherits(Socket, EventEmitter);
 
 module.exports = Socket;
 
-},{"inherits":120,"retry":142,"tiny-emitter":150}],91:[function(require,module,exports){
+},{"inherits":126,"retry":149,"tiny-emitter":157}],97:[function(require,module,exports){
 'use strict';
 
 var SearchClient = require('./search-client');
@@ -9733,8 +10039,8 @@ function groupIDFromSelection(selection, results) {
 
 // @ngInject
 module.exports = function WidgetController(
-  $scope, annotationUI, crossframe, annotationMapper, drafts,
-  features, groups, rootThread, settings, streamer, streamFilter, store
+  $scope, annotationUI, annotationMapper, drafts, features, frameSync, groups,
+  rootThread, settings, streamer, streamFilter, store
 ) {
   function thread() {
     return rootThread.thread(annotationUI.getState());
@@ -9760,25 +10066,19 @@ module.exports = function WidgetController(
 
   $scope.$on('$destroy', unsubscribeAnnotationUI);
 
-  function annotationExists(id) {
-    return annotationUI.getState().annotations.some(function (annot) {
-      return annot.id === id;
-    });
-  }
-
   function focusAnnotation(annotation) {
     var highlights = [];
     if (annotation) {
       highlights = [annotation.$$tag];
     }
-    crossframe.call('focusAnnotations', highlights);
+    frameSync.focusAnnotations(highlights);
   }
 
   function scrollToAnnotation(annotation) {
     if (!annotation) {
       return;
     }
-    crossframe.call('scrollToAnnotation', annotation.$$tag);
+    frameSync.scrollToAnnotation(annotation.$$tag);
   }
 
   /** Returns the annotation type - note or annotation of the first annotation
@@ -9818,10 +10118,7 @@ module.exports = function WidgetController(
   var searchClients = [];
 
   function _resetAnnotations() {
-    // Unload all the annotations
-    annotationMapper.unloadAnnotations(annotationUI.getState().annotations);
-    // Reload all the drafts
-    annotationUI.addAnnotations(drafts.unsaved());
+    annotationMapper.unloadAnnotations(annotationUI.savedAnnotations());
   }
 
   function _loadAnnotationsFor(uris, group) {
@@ -9868,7 +10165,7 @@ module.exports = function WidgetController(
   }
 
   function isLoading() {
-    if (!crossframe.frames.some(function (frame) { return frame.uri; })) {
+    if (!frameSync.frames.some(function (frame) { return frame.uri; })) {
       // The document's URL isn't known so the document must still be loading.
       return true;
     }
@@ -9949,7 +10246,7 @@ module.exports = function WidgetController(
       return;
     }
     var matchesSelection = tags.some(function (tag) {
-      return tag.tag === selectedAnnot.$$tag;
+      return tag === selectedAnnot.$$tag;
     });
     if (!matchesSelection) {
       return;
@@ -9970,12 +10267,12 @@ module.exports = function WidgetController(
       return;
     }
     annotationUI.clearSelectedAnnotations();
-    loadAnnotations(crossframe.frames);
+    loadAnnotations(frameSync.frames);
   });
 
   // Watch anything that may require us to reload annotations.
   $scope.$watchCollection(function () {
-    return crossframe.frames;
+    return frameSync.frames;
   }, loadAnnotations);
 
   $scope.setCollapsed = function (id, collapsed) {
@@ -10004,7 +10301,7 @@ module.exports = function WidgetController(
     var selectedID = firstKey(annotationUI.getState().selectedAnnotationMap);
     return !isLoading() &&
            !!selectedID &&
-           !annotationExists(selectedID);
+           !annotationUI.annotationExists(selectedID);
   };
 
   $scope.shouldShowLoggedOutMessage = function () {
@@ -10025,7 +10322,7 @@ module.exports = function WidgetController(
     var selectedID = firstKey(annotationUI.getState().selectedAnnotationMap);
     return !isLoading() &&
            !!selectedID &&
-           annotationExists(selectedID);
+           annotationUI.annotationExists(selectedID);
   };
 
   $scope.isLoading = isLoading;
@@ -10044,81 +10341,81 @@ module.exports = function WidgetController(
     return thread().totalChildren;
   };
 };
-module.exports.$inject = ["$scope", "annotationUI", "crossframe", "annotationMapper", "drafts", "features", "groups", "rootThread", "settings", "streamer", "streamFilter", "store"];
+module.exports.$inject = ["$scope", "annotationUI", "annotationMapper", "drafts", "features", "frameSync", "groups", "rootThread", "settings", "streamer", "streamFilter", "store"];
 
-},{"./annotation-metadata":2,"./events":50,"./search-client":69,"./tab-counts":78,"./ui-constants":81,"./util/memoize":84}],92:[function(require,module,exports){
-module.exports = "<header class=\"annotation-header\" ng-if=\"!vm.user()\">\n  <strong>You must be logged in to create annotations.</strong>\n</header>\n\n<div ng-keydown=\"vm.onKeydown($event)\" ng-if=\"vm.user()\">\n  <header class=\"annotation-header\">\n    <!-- User -->\n    <span ng-if=\"vm.user()\">\n      <a class=\"annotation-header__user\"\n        target=\"_blank\"\n        ng-href=\"{{vm.serviceUrl('user',{user:vm.user()})}}\"\n        >{{vm.username()}}</a>\n      <span class=\"annotation-collapsed-replies\">\n        <a class=\"annotation-link\" href=\"\"\n          ng-click=\"vm.onReplyCountClick()\"\n          ng-pluralize count=\"vm.replyCount\"\n          when=\"{'0': '', 'one': '1 reply', 'other': '{} replies'}\"></a>\n      </span>\n      <br>\n      <span class=\"annotation-header__share-info\">\n        <a class=\"annotation-header__group\"\n          target=\"_blank\" ng-if=\"vm.group() && vm.group().url\" href=\"{{vm.group().url}}\">\n          <i class=\"h-icon-group\"></i><span class=\"annotation-header__group-name\">{{vm.group().name}}</span>\n        </a>\n        <span ng-show=\"vm.state().isPrivate\"\n          title=\"This annotation is visible only to you.\">\n          <i class=\"h-icon-lock\"></i><span class=\"annotation-header__group-name\" ng-show=\"!vm.group().url\">Only me</span>\n        </span>\n        <i class=\"h-icon-border-color\" ng-show=\"vm.isHighlight() && !vm.editing()\" title=\"This is a highlight. Click 'edit' to add a note or tag.\"></i>\n        <span ng-if=\"::vm.showDocumentInfo\">\n          <span class=\"annotation-citation\" ng-if=\"vm.documentMeta().titleLink\">\n            on \"<a ng-href=\"{{vm.documentMeta().titleLink}}\">{{vm.documentMeta().titleText}}</a>\"\n          </span>\n          <span class=\"annotation-citation\" ng-if=\"!vm.documentMeta().titleLink\">\n            on \"{{vm.documentMeta().titleText}}\"\n          </span>\n          <span class=\"annotation-citation-domain\"\n                ng-if=\"vm.documentMeta().domain\">({{vm.documentMeta().domain}})</span>\n        </span>\n      </span>\n    </span>\n\n    <span class=\"u-flex-spacer\"></span>\n\n    <timestamp\n      class-name=\"'annotation-header__timestamp'\"\n      timestamp=\"vm.updated()\"\n      href=\"vm.links().html\"\n      ng-if=\"!vm.editing() && vm.updated()\"></timestamp>\n  </header>\n\n  <!-- Excerpts -->\n  <section class=\"annotation-quote-list\"\n    ng-class=\"{'is-orphan' : vm.isOrphan()}\"\n    ng-repeat=\"target in vm.target() track by $index\"\n    ng-if=\"vm.hasQuotes()\">\n    <excerpt collapsed-height=\"35\"\n      inline-controls=\"true\"\n      overflow-hysteresis=\"20\"\n      content-data=\"selector.exact\">\n      <blockquote class=\"annotation-quote\"\n        ng-bind-html=\"selector.exact\"\n        ng-repeat=\"selector in target.selector\n          | filter : {'type': 'TextQuoteSelector'}\n          track by $index\"></blockquote>\n    </excerpt>\n  </section>\n\n  <!-- / Excerpts -->\n\n  <!-- Body -->\n  <section name=\"text\" class=\"annotation-body\">\n    <excerpt enabled=\"!vm.editing()\"\n      inline-controls=\"false\"\n      on-collapsible-changed=\"vm.setBodyCollapsible(collapsible)\"\n      collapse=\"vm.collapseBody\"\n      collapsed-height=\"400\"\n      overflow-hysteresis=\"20\"\n      content-data=\"vm.state().text\">\n      <markdown text=\"vm.state().text\"\n        on-edit-text=\"vm.setText(text)\"\n        read-only=\"!vm.editing()\">\n      </markdown>\n    </excerpt>\n  </section>\n  <!-- / Body -->\n\n  <!-- Tags -->\n  <div class=\"annotation-body form-field\" ng-if=\"vm.editing()\">\n    <tag-editor tags=\"vm.state().tags\"\n                on-edit-tags=\"vm.setTags(tags)\"></tag-editor>\n  </div>\n\n  <div class=\"annotation-body u-layout-row tags tags-read-only\"\n       ng-if=\"(vm.canCollapseBody || vm.state().tags.length) && !vm.editing()\">\n    <ul class=\"tag-list\">\n      <li class=\"tag-item\" ng-repeat=\"tag in vm.state().tags\">\n        <a ng-href=\"{{vm.tagStreamURL(tag)}}\" target=\"_blank\">{{tag}}</a>\n      </li>\n    </ul>\n    <div class=\"u-stretch\"></div>\n    <a class=\"annotation-link u-strong\" ng-show=\"vm.canCollapseBody\"\n      ng-click=\"vm.toggleCollapseBody($event)\"\n      ng-title=\"vm.collapseBody ? 'Show the full annotation text' : 'Show the first few lines only'\"\n      ng-bind=\"vm.collapseBody ? 'More' : 'Less'\"></a>\n  </div>\n  <!-- / Tags -->\n\n  <footer class=\"annotation-footer\">\n    <div class=\"annotation-form-actions\" ng-if=\"vm.editing()\">\n      <publish-annotation-btn\n        class=\"publish-annotation-btn\"\n        group=\"vm.group()\"\n        can-post=\"vm.hasContent()\"\n        is-shared=\"vm.isShared()\"\n        on-cancel=\"vm.revert()\"\n        on-save=\"vm.save()\"\n        on-set-privacy=\"vm.setPrivacy(level)\"></publish-annotation-btn>\n    </div>\n\n    <div class=\"annotation-section annotation-license\"\n      ng-show=\"vm.isShared() && vm.editing()\">\n      <a class=\"annotation-license__link\" href=\"http://creativecommons.org/publicdomain/zero/1.0/\"\n        title=\"View more information about the Creative Commons Public Domain license\"\n        target=\"_blank\">\n        <i class=\"h-icon-cc-logo\"></i><i class=\"h-icon-cc-zero\"></i>\n        Annotations can be freely reused by anyone for any purpose.\n      </a>\n    </div>\n\n    <div class=\"annotation-replies\" ng-if=\"!vm.isReply() && vm.replyCount > 0\">\n      <a href=\"\"\n        ng-click=\"vm.onReplyCountClick()\">\n        <span class=\"annotation-replies__link\">{{ vm.isCollapsed ? 'Show replies' : 'Hide replies' }}</span>\n        <span class=\"annotation-replies__count\">({{ vm.replyCount }})</span>\n      </a>\n    </div>\n\n    <div class=\"annotation-actions\" ng-if=\"vm.isSaving\">\n      Saving...\n    </div>\n\n    <div class=\"annotation-actions\" ng-if=\"!vm.isSaving && !vm.editing() && vm.id()\">\n      <div ng-show=\"vm.isSaving\">Saving…</div>\n      <button class=\"btn btn-clean annotation-action-btn\"\n        ng-show=\"vm.authorize('update') && !vm.isSaving\"\n        ng-click=\"vm.edit()\"\n        aria-label=\"Edit\"\n        h-tooltip>\n        <i class=\"h-icon-annotation-edit btn-icon \"></i>\n      </button>\n      <button class=\"btn btn-clean annotation-action-btn\"\n        ng-show=\"vm.authorize('delete')\"\n        ng-click=\"vm.delete()\"\n        aria-label=\"Delete\"\n        h-tooltip>\n        <i class=\"h-icon-annotation-delete btn-icon \"></i>\n      </button>\n      <button class=\"btn btn-clean annotation-action-btn\"\n        ng-click=\"vm.reply()\"\n        aria-label=\"Reply\"\n        h-tooltip>\n        <i class=\"h-icon-annotation-reply btn-icon \"></i>\n      </button>\n      <span class=\"annotation-share-dialog-wrapper\">\n        <button class=\"btn btn-clean annotation-action-btn\"\n          ng-click=\"vm.showShareDialog = true\"\n          aria-label=\"Share\"\n          h-tooltip>\n          <i class=\"h-icon-annotation-share btn-icon \"></i>\n        </button>\n        <annotation-share-dialog\n          group=\"vm.group()\"\n          uri=\"vm.links().incontext\"\n          is-private=\"vm.state().isPrivate\"\n          is-open=\"vm.showShareDialog\"\n          on-close=\"vm.showShareDialog = false\">\n        </annotation-share-dialog>\n      </span>\n    </div>\n  </footer>\n</div>\n";
-
-},{}],93:[function(require,module,exports){
-module.exports = "<div class=\"annotation-share-dialog\" ng-class=\"{'is-open': vm.isOpen}\">\n  <div class=\"annotation-share-dialog-target\">\n    <span class=\"annotation-share-dialog-target__label\">Share:</span>\n    <a href=\"https://twitter.com/intent/tweet?url={{vm.uri | urlEncode}}&hashtags=annotated\"\n      target=\"_blank\"\n      title=\"Tweet link\"\n      class=\"annotation-share-dialog-target__icon h-icon-twitter\"></a>\n    <a href=\"https://www.facebook.com/sharer/sharer.php?u={{vm.uri | urlEncode}}\"\n      target=\"_blank\"\n      title=\"Share on Facebook\"\n      class=\"annotation-share-dialog-target__icon h-icon-facebook\"></a>\n    <a href=\"https://plus.google.com/share?url={{vm.uri | urlEncode}}\"\n      target=\"_blank\"\n      title=\"Post on Google Plus\"\n      class=\"annotation-share-dialog-target__icon h-icon-google-plus\"></a>\n    <a href=\"mailto:?subject=Let's%20Annotate&amp;body={{vm.uri}}\"\n      title=\"Share via email\"\n      class=\"annotation-share-dialog-target__icon h-icon-mail\"></a>\n  </div>\n  <div class=\"annotation-share-dialog-link\" type=\"text\">\n    <input class=\"annotation-share-dialog-link__text\"\n      value=\"{{vm.uri}}\" readonly>\n    <span class=\"annotation-share-dialog-link__feedback\" ng-if=\"vm.copyToClipboardMessage\">\n      {{vm.copyToClipboardMessage}}\n    </span>\n    <button class=\"btn btn-clean annotation-share-dialog-link__btn\"\n      ng-click=\"vm.copyToClipboard($event)\">\n      <i class=\"h-icon-clipboard btn-icon\"></i>\n    </button>\n  </div>\n  <div class=\"annotation-share-dialog-msg\" ng-if=\"vm.group && !vm.group.public && !vm.isPrivate\">\n    <span class=\"annotation-share-dialog-msg__audience\">\n      Group.\n    </span>\n    Only group members will be able to view this annotation.\n  </div>\n  <div class=\"annotation-share-dialog-msg\" ng-if=\"vm.isPrivate\">\n    <span class=\"annotation-share-dialog-msg__audience\">\n      Only me.\n    </span>\n    No one else will be able to view this annotation.\n  </div>\n</div>\n";
-
-},{}],94:[function(require,module,exports){
-module.exports = "<div ng-class=\"vm.threadClasses()\">\n  <div class=\"annotation-thread__thread-edge\" ng-if=\"!vm.isTopLevelThread()\">\n    <a href=\"\"\n       ng-class=\"vm.threadToggleClasses()\"\n       title=\"{{vm.thread.collapsed && 'Expand' || 'Collapse'}}\"\n       ng-click=\"vm.toggleCollapsed()\">\n       <span ng-class=\"{'h-icon-arrow-right': vm.thread.collapsed,\n                        'h-icon-arrow-drop-down': !vm.thread.collapsed}\"></span>\n    </a>\n    <div class=\"annotation-thread__thread-line\"></div>\n  </div>\n  <div class=\"annotation-thread__content\">\n    <annotation ng-class=\"vm.annotationClasses()\"\n             annotation=\"vm.thread.annotation\"\n             is-collapsed=\"vm.thread.collapsed\"\n             is-last-reply=\"$last\"\n             is-sidebar=\"::vm.isSidebar\"\n             name=\"annotation\"\n             ng-mouseenter=\"vm.annotationHovered = true\"\n             ng-mouseleave=\"vm.annotationHovered = false\"\n             ng-if=\"vm.thread.annotation\"\n             ng-show=\"vm.thread.visible\"\n             show-document-info=\"vm.showDocumentInfo\"\n             on-reply-count-click=\"vm.toggleCollapsed()\"\n             reply-count=\"vm.thread.replyCount\">\n    </annotation>\n\n    <div ng-if=\"!vm.thread.annotation\" class=\"thread-deleted\">\n      <p><em>Message not available.</em></p>\n    </div>\n\n    <div ng-if=\"vm.hiddenCount() > 0\">\n      <a class=\"small\"\n         href=\"\"\n         ng-click=\"vm.showThreadAndReplies()\"\n         ng-pluralize\n         count=\"vm.hiddenCount()\"\n         when=\"{'0': '',\n               one: 'View one more in conversation',\n               other: 'View {} more in conversation'}\"\n         ></a>\n    </div>\n\n    <!-- Replies -->\n    <ul ng-show=\"!vm.thread.collapsed\">\n      <li ng-repeat=\"child in vm.thread.children track by child.id\"\n          ng-show=\"vm.shouldShowReply(child)\">\n        <annotation-thread\n          show-document-info=\"false\"\n          thread=\"child\"\n          on-change-collapsed=\"vm.onChangeCollapsed({id:id, collapsed:collapsed})\"\n          on-force-visible=\"vm.onForceVisible({thread:thread})\">\n        </annotation-thread>\n      </li>\n    </ul>\n  </div>\n</div>\n";
-
-},{}],95:[function(require,module,exports){
-module.exports = "<top-bar\n  auth=\"auth\"\n  on-login=\"login()\"\n  on-logout=\"logout()\"\n  on-share-page=\"share()\"\n  on-show-help-panel=\"helpPanel.visible = true\"\n  is-sidebar=\"::isSidebar\"\n  search-controller=\"search\"\n  sort-key=\"sortKey()\"\n  sort-keys-available=\"sortKeysAvailable()\"\n  on-change-sort-key=\"setSortKey(sortKey)\">\n</top-bar>\n\n<div class=\"create-account-banner\" ng-if=\"isSidebar && auth.status === 'logged-out'\" ng-cloak>\n  To annotate this document\n  <a href=\"{{ serviceUrl('signup') }}\" target=\"_blank\">\n    create a free account\n  </a>\n  or <a href=\"\" ng-click=\"login()\">log in</a>\n</div>\n\n<div class=\"content\" ng-cloak>\n  <login-form\n    ng-if=\"accountDialog.visible\"\n    on-close=\"accountDialog.visible = false\">\n  </login-form>\n  <sidebar-tutorial ng-if=\"isSidebar\"></sidebar-tutorial>\n  <share-dialog\n    ng-if=\"shareDialog.visible\"\n    on-close=\"shareDialog.visible = false\">\n  </share-dialog>\n  <help-panel ng-if=\"helpPanel.visible\"\n    on-close=\"helpPanel.visible = false\"\n    auth=\"auth\">\n  </help-panel>\n  <main ng-view=\"\"></main>\n</div>\n";
-
-},{}],96:[function(require,module,exports){
-module.exports = "<div class=\"dropdown-menu-btn\">\n  <button\n    class=\"dropdown-menu-btn__btn\"\n    ng-bind=\"label\"\n    ng-click=\"vm.onClick($event)\"\n    ng-disabled=\"isDisabled\">\n  </button>\n  <button\n    class=\"dropdown-menu-btn__dropdown-arrow\"\n    title=\"{{dropdownMenuLabel}}\"\n    ng-click=\"vm.toggleDropdown($event)\">\n    <div class=\"dropdown-menu-btn__dropdown-arrow-separator\"></div>\n    <div class=\"dropdown-menu-btn__dropdown-arrow-indicator\">\n      <div>▼</div>\n    </div>\n  </button>\n</div>\n";
-
-},{}],97:[function(require,module,exports){
-module.exports = "<div ng-transclude ng-if=\"!vm.enabled\"></div>\n<div class=\"excerpt__container\" ng-if=\"vm.enabled\">\n  <div class=\"excerpt\" ng-style=\"vm.contentStyle()\">\n    <div ng-transclude></div>\n    <div ng-click=\"vm.expand()\"\n         ng-class=\"vm.bottomShadowStyles()\"\n         title=\"Show the full excerpt\"></div>\n    <div class=\"excerpt__inline-controls\"\n         ng-show=\"vm.showInlineControls()\">\n      <span class=\"excerpt__toggle-link\" ng-show=\"vm.isExpandable()\">\n        … <a ng-click=\"vm.toggle($event)\"\n            title=\"Show the full excerpt\">More</a>\n      </span>\n      <span class=\"excerpt__toggle-link\" ng-show=\"vm.isCollapsible()\">\n        <a ng-click=\"vm.toggle($event)\"\n            title=\"Show the first few lines only\">Less</a>\n      </span>\n    </div>\n  </div>\n</div>\n";
-
-},{}],98:[function(require,module,exports){
-module.exports = "<span ng-if=\"auth.status === 'logged-out'\"\n      ng-switch on=\"groups.focused().public\">\n  <i class=\"group-list-label__icon h-icon-public\" ng-switch-when=\"true\"></i><!-- nospace\n  !--><i class=\"group-list-label__icon h-icon-group\" ng-switch-default></i>\n  <span class=\"group-list-label__label\">{{groups.focused().name}}</span>\n</span>\n\n<div class=\"pull-right\"\n     ng-if=\"auth.status === 'logged-in'\"\n     dropdown\n     keyboard-nav>\n  <div class=\"dropdown-toggle\"\n        dropdown-toggle\n        data-toggle=\"dropdown\"\n        role=\"button\"\n        ng-switch on=\"groups.focused().public\"\n        title=\"Change the selected group\">\n    <i class=\"group-list-label__icon h-icon-public\" ng-switch-when=\"true\"></i><!-- nospace\n    !--><i class=\"group-list-label__icon h-icon-group\" ng-switch-default></i>\n    <span class=\"group-list-label__label\">{{groups.focused().name}}</span><!-- nospace\n    !--><i class=\"h-icon-arrow-drop-down\"></i>\n  </div>\n  <div class=\"dropdown-menu__top-arrow\"></div>\n  <ul class=\"dropdown-menu pull-none\" role=\"menu\">\n    <li class=\"dropdown-menu__row dropdown-menu__row--unpadded \"\n        ng-repeat=\"group in groups.all()\">\n      <div ng-class=\"{'group-item': true, selected: group.id == groups.focused().id}\"\n           ng-click=\"focusGroup(group.id)\">\n        <!-- the group icon !-->\n        <div class=\"group-icon-container\" ng-switch on=\"group.public\">\n          <i class=\"h-icon-public\" ng-switch-when=\"true\"></i>\n          <i class=\"h-icon-group\" ng-switch-default></i>\n        </div>\n        <!-- the group name and share link !-->\n        <div class=\"group-details\">\n          <div class=\"group-name-container\">\n            <a class=\"group-name-link\"\n               href=\"\"\n               title=\"{{ group.public ? 'Show public annotations' : 'Show and create annotations in ' + group.name }}\">\n               {{group.name}}\n            </a>\n          </div>\n          <div class=\"share-link-container\" ng-click=\"$event.stopPropagation()\" ng-if=\"!group.public\">\n            <a class=\"share-link\" href=\"{{group.url}}\" target=\"_blank\">\n              View group activity and invite others\n            </a>\n          </div>\n        </div>\n        <!-- the 'Leave group' icon !-->\n        <div class=\"group-cancel-icon-container\" ng-click=\"$event.stopPropagation()\">\n          <i class=\"h-icon-cancel-outline btn--cancel\"\n             ng-if=\"!group.public\"\n             ng-click=\"leaveGroup(group.id)\"\n             title=\"Leave '{{group.name}}'\"></i>\n        </div>\n      </div>\n    </li>\n    <li class=\"dropdown-menu__row dropdown-menu__row--unpadded new-group-btn\">\n      <div class=\"group-item\" ng-click=\"createNewGroup()\">\n        <div class=\"group-icon-container\"><i class=\"h-icon-add\"></i></div>\n        <div class=\"group-details\">\n          <a href=\"\" class=\"group-name-link\" title=\"Create a new group to share annotations\">\n            New group\n          </a>\n        </div>\n      </div>\n    </li>\n  </ul>\n</div>\n";
+},{"./annotation-metadata":3,"./events":50,"./search-client":75,"./tab-counts":84,"./ui-constants":87,"./util/memoize":90}],98:[function(require,module,exports){
+module.exports = "<header class=\"annotation-header\" ng-if=\"!vm.user()\">\n  <strong>You must be logged in to create annotations.</strong>\n</header>\n\n<div ng-keydown=\"vm.onKeydown($event)\" ng-if=\"vm.user()\">\n  <header class=\"annotation-header\">\n    <!-- User -->\n    <span ng-if=\"vm.user()\">\n      <a class=\"annotation-header__user\"\n        target=\"_blank\"\n        ng-href=\"{{vm.serviceUrl('user',{user:vm.user()})}}\"\n        >{{vm.username()}}</a>\n      <span class=\"annotation-collapsed-replies\">\n        <a class=\"annotation-link\" href=\"\"\n          ng-click=\"vm.onReplyCountClick()\"\n          ng-pluralize count=\"vm.replyCount\"\n          when=\"{'0': '', 'one': '1 reply', 'other': '{} replies'}\"></a>\n      </span>\n      <br>\n      <span class=\"annotation-header__share-info\">\n        <a class=\"annotation-header__group\"\n          target=\"_blank\" ng-if=\"vm.group() && vm.group().url\" href=\"{{vm.group().url}}\">\n          <i class=\"h-icon-group\"></i><span class=\"annotation-header__group-name\">{{vm.group().name}}</span>\n        </a>\n        <span ng-show=\"vm.state().isPrivate\"\n          title=\"This annotation is visible only to you.\">\n          <i class=\"h-icon-lock\"></i><span class=\"annotation-header__group-name\" ng-show=\"!vm.group().url\">Only me</span>\n        </span>\n        <i class=\"h-icon-border-color\" ng-show=\"vm.isHighlight() && !vm.editing()\" title=\"This is a highlight. Click 'edit' to add a note or tag.\"></i>\n        <span ng-if=\"::vm.showDocumentInfo\">\n          <span class=\"annotation-citation\" ng-if=\"vm.documentMeta().titleLink\">\n            on \"<a ng-href=\"{{vm.documentMeta().titleLink}}\">{{vm.documentMeta().titleText}}</a>\"\n          </span>\n          <span class=\"annotation-citation\" ng-if=\"!vm.documentMeta().titleLink\">\n            on \"{{vm.documentMeta().titleText}}\"\n          </span>\n          <span class=\"annotation-citation-domain\"\n                ng-if=\"vm.documentMeta().domain\">({{vm.documentMeta().domain}})</span>\n        </span>\n      </span>\n    </span>\n\n    <span class=\"u-flex-spacer\"></span>\n\n    <timestamp\n      class-name=\"'annotation-header__timestamp'\"\n      timestamp=\"vm.updated()\"\n      href=\"vm.links().html\"\n      ng-if=\"!vm.editing() && vm.updated()\"></timestamp>\n  </header>\n\n  <!-- Excerpts -->\n  <section class=\"annotation-quote-list\"\n    ng-class=\"{'is-orphan' : vm.isOrphan()}\"\n    ng-repeat=\"target in vm.target() track by $index\"\n    ng-if=\"vm.hasQuotes()\">\n    <excerpt collapsed-height=\"35\"\n      inline-controls=\"true\"\n      overflow-hysteresis=\"20\"\n      content-data=\"selector.exact\">\n      <blockquote class=\"annotation-quote\"\n        ng-bind-html=\"selector.exact\"\n        ng-repeat=\"selector in target.selector\n          | filter : {'type': 'TextQuoteSelector'}\n          track by $index\"></blockquote>\n    </excerpt>\n  </section>\n\n  <!-- / Excerpts -->\n\n  <!-- Body -->\n  <section name=\"text\" class=\"annotation-body\">\n    <excerpt enabled=\"!vm.editing()\"\n      inline-controls=\"false\"\n      on-collapsible-changed=\"vm.setBodyCollapsible(collapsible)\"\n      collapse=\"vm.collapseBody\"\n      collapsed-height=\"400\"\n      overflow-hysteresis=\"20\"\n      content-data=\"vm.state().text\">\n      <markdown text=\"vm.state().text\"\n        on-edit-text=\"vm.setText(text)\"\n        read-only=\"!vm.editing()\">\n      </markdown>\n    </excerpt>\n  </section>\n  <!-- / Body -->\n\n  <!-- Tags -->\n  <div class=\"annotation-body form-field\" ng-if=\"vm.editing()\">\n    <tag-editor tags=\"vm.state().tags\"\n                on-edit-tags=\"vm.setTags(tags)\"></tag-editor>\n  </div>\n\n  <div class=\"annotation-body u-layout-row tags tags-read-only\"\n       ng-if=\"(vm.canCollapseBody || vm.state().tags.length) && !vm.editing()\">\n    <ul class=\"tag-list\">\n      <li class=\"tag-item\" ng-repeat=\"tag in vm.state().tags\">\n        <a ng-href=\"{{vm.tagStreamURL(tag)}}\" target=\"_blank\">{{tag}}</a>\n      </li>\n    </ul>\n    <div class=\"u-stretch\"></div>\n    <a class=\"annotation-link u-strong\" ng-show=\"vm.canCollapseBody\"\n      ng-click=\"vm.toggleCollapseBody($event)\"\n      ng-title=\"vm.collapseBody ? 'Show the full annotation text' : 'Show the first few lines only'\"\n      ng-bind=\"vm.collapseBody ? 'More' : 'Less'\"></a>\n  </div>\n  <!-- / Tags -->\n\n  <footer class=\"annotation-footer\">\n    <div class=\"annotation-form-actions\" ng-if=\"vm.editing()\">\n      <publish-annotation-btn\n        class=\"publish-annotation-btn\"\n        group=\"vm.group()\"\n        can-post=\"vm.hasContent()\"\n        is-shared=\"vm.isShared()\"\n        on-cancel=\"vm.revert()\"\n        on-save=\"vm.save()\"\n        on-set-privacy=\"vm.setPrivacy(level)\"></publish-annotation-btn>\n    </div>\n\n    <div class=\"annotation-section annotation-license\"\n      ng-show=\"vm.isShared() && vm.editing()\">\n      <a class=\"annotation-license__link\" href=\"http://creativecommons.org/publicdomain/zero/1.0/\"\n        title=\"View more information about the Creative Commons Public Domain license\"\n        target=\"_blank\">\n        <i class=\"h-icon-cc-logo\"></i><i class=\"h-icon-cc-zero\"></i>\n        Annotations can be freely reused by anyone for any purpose.\n      </a>\n    </div>\n\n    <div class=\"annotation-replies\" ng-if=\"!vm.isReply() && vm.replyCount > 0\">\n      <a href=\"\"\n        ng-click=\"vm.onReplyCountClick()\">\n        <span class=\"annotation-replies__link\">{{ vm.isCollapsed ? 'Show replies' : 'Hide replies' }}</span>\n        <span class=\"annotation-replies__count\">({{ vm.replyCount }})</span>\n      </a>\n    </div>\n\n    <div class=\"annotation-actions\" ng-if=\"vm.isSaving\">\n      Saving...\n    </div>\n\n    <div class=\"annotation-actions\" ng-if=\"!vm.isSaving && !vm.editing() && vm.id()\">\n      <div ng-show=\"vm.isSaving\">Saving…</div>\n      <button class=\"btn btn-clean annotation-action-btn\"\n        ng-show=\"vm.authorize('update') && !vm.isSaving\"\n        ng-click=\"vm.edit()\"\n        ng-disabled=\"vm.isDeleted()\"\n        aria-label=\"Edit\"\n        h-tooltip>\n        <i class=\"h-icon-annotation-edit btn-icon \"></i>\n      </button>\n      <button class=\"btn btn-clean annotation-action-btn\"\n        ng-show=\"vm.authorize('delete')\"\n        ng-click=\"vm.delete()\"\n        ng-disabled=\"vm.isDeleted()\"\n        aria-label=\"Delete\"\n        h-tooltip>\n        <i class=\"h-icon-annotation-delete btn-icon \"></i>\n      </button>\n      <button class=\"btn btn-clean annotation-action-btn\"\n        ng-click=\"vm.reply()\"\n        ng-disabled=\"vm.isDeleted()\"\n        aria-label=\"Reply\"\n        h-tooltip>\n        <i class=\"h-icon-annotation-reply btn-icon \"></i>\n      </button>\n      <span class=\"annotation-share-dialog-wrapper\">\n        <button class=\"btn btn-clean annotation-action-btn\"\n          ng-click=\"vm.showShareDialog = true\"\n          ng-disabled=\"vm.isDeleted()\"\n          aria-label=\"Share\"\n          h-tooltip>\n          <i class=\"h-icon-annotation-share btn-icon \"></i>\n        </button>\n        <annotation-share-dialog\n          group=\"vm.group()\"\n          uri=\"vm.links().incontext\"\n          is-private=\"vm.state().isPrivate\"\n          is-open=\"vm.showShareDialog\"\n          on-close=\"vm.showShareDialog = false\">\n        </annotation-share-dialog>\n      </span>\n    </div>\n  </footer>\n</div>\n";
 
 },{}],99:[function(require,module,exports){
-module.exports = "\n<a class=\"help-panel-content__link\"\n   href=\"mailto:support@hypothes.is?subject=Hypothesis%20support&amp;body=Version:%20{{ vm.version }}%0D%0AUser%20Agent:%20{{vm.userAgent}}%0D%0AURL:%20{{ vm.url }}%0D%0APDF%20fingerprint:%20{{ vm.documentFingerprint ? vm.documentFingerprint : '-' }}%0D%0AUsername:%20{{ vm.auth.username ? vm.auth.username : '-' }}%0D%0ADate:%20{{ vm.dateTime | date:'dd MMM yyyy HH:mm:ss Z' }} \"\n>Send us a message</a>\n";
+module.exports = "<div class=\"annotation-share-dialog\" ng-class=\"{'is-open': vm.isOpen}\">\n  <div class=\"annotation-share-dialog-target\">\n    <span class=\"annotation-share-dialog-target__label\">Share:</span>\n    <a href=\"https://twitter.com/intent/tweet?url={{vm.uri | urlEncode}}&hashtags=annotated\"\n      target=\"_blank\"\n      title=\"Tweet link\"\n      class=\"annotation-share-dialog-target__icon h-icon-twitter\"></a>\n    <a href=\"https://www.facebook.com/sharer/sharer.php?u={{vm.uri | urlEncode}}\"\n      target=\"_blank\"\n      title=\"Share on Facebook\"\n      class=\"annotation-share-dialog-target__icon h-icon-facebook\"></a>\n    <a href=\"https://plus.google.com/share?url={{vm.uri | urlEncode}}\"\n      target=\"_blank\"\n      title=\"Post on Google Plus\"\n      class=\"annotation-share-dialog-target__icon h-icon-google-plus\"></a>\n    <a href=\"mailto:?subject=Let's%20Annotate&amp;body={{vm.uri}}\"\n      title=\"Share via email\"\n      class=\"annotation-share-dialog-target__icon h-icon-mail\"></a>\n  </div>\n  <div class=\"annotation-share-dialog-link\" type=\"text\">\n    <input class=\"annotation-share-dialog-link__text\"\n      value=\"{{vm.uri}}\" readonly>\n    <span class=\"annotation-share-dialog-link__feedback\" ng-if=\"vm.copyToClipboardMessage\">\n      {{vm.copyToClipboardMessage}}\n    </span>\n    <button class=\"btn btn-clean annotation-share-dialog-link__btn\"\n      ng-click=\"vm.copyToClipboard($event)\">\n      <i class=\"h-icon-clipboard btn-icon\"></i>\n    </button>\n  </div>\n  <div class=\"annotation-share-dialog-msg\" ng-if=\"vm.group && !vm.group.public && !vm.isPrivate\">\n    <span class=\"annotation-share-dialog-msg__audience\">\n      Group.\n    </span>\n    Only group members will be able to view this annotation.\n  </div>\n  <div class=\"annotation-share-dialog-msg\" ng-if=\"vm.isPrivate\">\n    <span class=\"annotation-share-dialog-msg__audience\">\n      Only me.\n    </span>\n    No one else will be able to view this annotation.\n  </div>\n</div>\n";
 
 },{}],100:[function(require,module,exports){
-module.exports = "<div class=\"help-panel\">\n  <i class=\"close h-icon-close\"\n    role=\"button\"\n    title=\"Close\"\n    ng-click=\"vm.onClose()\"></i>\n\n  <header class=\"help-panel-title\">\n    Help\n  </header>\n  <div class=\"help-panel-content\">\n    <help-link\n      version=\"vm.version\"\n      user-agent=\"vm.userAgent\"\n      url=\"vm.url\"\n      document-fingerprint=\"vm.documentFingerprint\"\n      auth=\"vm.auth\"\n      date-time=\"vm.dateTime\">\n    </help-link>\n    if you have any questions or want to give us feedback.\n    You can also visit our <a class=\"help-panel-content__link\" href=\"{{vm.serviceUrl('help')}}\" target=\"_blank\"> help documents</a>.\n  </div>\n  <header class=\"help-panel-title\">\n    About this version\n  </header>\n  <dl class=\"help-panel-content\">\n    <dt class=\"help-panel-content__key\">Version: </dt>\n    <dd class=\"help-panel-content__val\">{{ vm.version }}</dd>\n    <dt class=\"help-panel-content__key\">User agent: </dt>\n    <dd class=\"help-panel-content__val\">{{ vm.userAgent }}</dd>\n    <div ng-if=\"vm.url\">\n      <dt class=\"help-panel-content__key\">URL: </dt>\n      <dd class=\"help-panel-content__val\">{{ vm.url }}</dd>\n    </div>\n    <div ng-if=\"vm.documentFingerprint\">\n      <dt class=\"help-panel-content__key\">PDF fingerprint: </dt>\n      <dd class=\"help-panel-content__val\">{{ vm.documentFingerprint }}</dd>\n    </div>\n    <div ng-if=\"vm.auth.userid\">\n      <dt class=\"help-panel-content__key\">Username: </dt>\n      <dd class=\"help-panel-content__val\">{{ vm.auth.username }}</dd>\n    </div>\n    <dt class=\"help-panel-content__key\">Date: </dt>\n    <dd class=\"help-panel-content__val\">{{ vm.dateTime | date:'dd MMM yyyy HH:mm:ss Z' }}</dd>\n  </div>\n</div>\n";
+module.exports = "<div ng-class=\"vm.threadClasses()\">\n  <div class=\"annotation-thread__thread-edge\" ng-if=\"!vm.isTopLevelThread()\">\n    <a href=\"\"\n       ng-class=\"vm.threadToggleClasses()\"\n       title=\"{{vm.thread.collapsed && 'Expand' || 'Collapse'}}\"\n       ng-click=\"vm.toggleCollapsed()\">\n       <span ng-class=\"{'h-icon-arrow-right': vm.thread.collapsed,\n                        'h-icon-arrow-drop-down': !vm.thread.collapsed}\"></span>\n    </a>\n    <div class=\"annotation-thread__thread-line\"></div>\n  </div>\n  <div class=\"annotation-thread__content\">\n    <annotation ng-class=\"vm.annotationClasses()\"\n             annotation=\"vm.thread.annotation\"\n             is-collapsed=\"vm.thread.collapsed\"\n             is-last-reply=\"$last\"\n             is-sidebar=\"::vm.isSidebar\"\n             name=\"annotation\"\n             ng-mouseenter=\"vm.annotationHovered = true\"\n             ng-mouseleave=\"vm.annotationHovered = false\"\n             ng-if=\"vm.thread.annotation\"\n             ng-show=\"vm.thread.visible\"\n             show-document-info=\"vm.showDocumentInfo\"\n             on-reply-count-click=\"vm.toggleCollapsed()\"\n             reply-count=\"vm.thread.replyCount\">\n    </annotation>\n\n    <div ng-if=\"!vm.thread.annotation\" class=\"thread-deleted\">\n      <p><em>Message not available.</em></p>\n    </div>\n\n    <div ng-if=\"vm.hiddenCount() > 0\">\n      <a class=\"small\"\n         href=\"\"\n         ng-click=\"vm.showThreadAndReplies()\"\n         ng-pluralize\n         count=\"vm.hiddenCount()\"\n         when=\"{'0': '',\n               one: 'View one more in conversation',\n               other: 'View {} more in conversation'}\"\n         ></a>\n    </div>\n\n    <!-- Replies -->\n    <ul ng-show=\"!vm.thread.collapsed\">\n      <li ng-repeat=\"child in vm.thread.children track by child.id\"\n          ng-show=\"vm.shouldShowReply(child)\">\n        <annotation-thread\n          show-document-info=\"false\"\n          thread=\"child\"\n          on-change-collapsed=\"vm.onChangeCollapsed({id:id, collapsed:collapsed})\"\n          on-force-visible=\"vm.onForceVisible({thread:thread})\">\n        </annotation-thread>\n      </li>\n    </ul>\n  </div>\n</div>\n";
 
 },{}],101:[function(require,module,exports){
-module.exports = "<!-- message to display to loggedout users when they visit direct linked annotations -->\n<li class=\"loggedout-message\">\n  <span>\n    This is a public annotation created with Hypothesis.\n    <br>\n    To reply or make your own annotations on this document,\n    <a class=\"loggedout-message__link\" href=\"{{vm.serviceUrl('signup')}}\" target=\"_blank\">create a free account</a>\n    or\n    <a class=\"loggedout-message__link\" href=\"\" ng-click=\"vm.onLogin()\">log in</a>.\n  </span>\n  <span class=\"loggedout-message-logo\">\n    <a href=\"https://hypothes.is\">\n      <i class=\"h-icon-hypothesis-logo loggedout-message-logo__icon\"></i>\n    </a>\n  </span>\n</li>\n";
+module.exports = "<top-bar\n  auth=\"auth\"\n  on-login=\"login()\"\n  on-logout=\"logout()\"\n  on-share-page=\"share()\"\n  on-show-help-panel=\"helpPanel.visible = true\"\n  is-sidebar=\"::isSidebar\"\n  pending-update-count=\"countPendingUpdates()\"\n  on-apply-pending-updates=\"applyPendingUpdates()\"\n  search-controller=\"search\"\n  sort-key=\"sortKey()\"\n  sort-keys-available=\"sortKeysAvailable()\"\n  on-change-sort-key=\"setSortKey(sortKey)\">\n</top-bar>\n\n<div class=\"create-account-banner\" ng-if=\"isSidebar && auth.status === 'logged-out'\" ng-cloak>\n  To annotate this document\n  <a href=\"{{ serviceUrl('signup') }}\" target=\"_blank\">\n    create a free account\n  </a>\n  or <a href=\"\" ng-click=\"login()\">log in</a>\n</div>\n\n<div class=\"content\" ng-cloak>\n  <login-form\n    ng-if=\"accountDialog.visible\"\n    on-close=\"accountDialog.visible = false\">\n  </login-form>\n  <sidebar-tutorial ng-if=\"isSidebar\"></sidebar-tutorial>\n  <share-dialog\n    ng-if=\"shareDialog.visible\"\n    on-close=\"shareDialog.visible = false\">\n  </share-dialog>\n  <help-panel ng-if=\"helpPanel.visible\"\n    on-close=\"helpPanel.visible = false\"\n    auth=\"auth\">\n  </help-panel>\n  <main ng-view=\"\"></main>\n</div>\n";
 
 },{}],102:[function(require,module,exports){
-module.exports = "<!-- New controls -->\n<span class=\"login-text\"\n      ng-if=\"vm.newStyle && vm.auth.status === 'unknown'\">⋯</span>\n<span class=\"login-text\"\n      ng-if=\"vm.newStyle && vm.auth.status === 'logged-out'\">\n  <a href=\"{{vm.serviceUrl('signup')}}\" target=\"_blank\">Sign up</a>\n  / <a href=\"\" ng-click=\"vm.onLogin()\">Log in</a>\n</span>\n<div ng-if=\"vm.newStyle\"\n     class=\"pull-right login-control-menu\"\n     dropdown\n     keyboard-nav>\n  <a role=\"button\"\n     class=\"top-bar__btn\"\n     data-toggle=\"dropdown\"\n     dropdown-toggle\n     title=\"{{vm.auth.username}}\">\n    <i class=\"h-icon-account\" ng-if=\"vm.auth.status === 'logged-in'\"></i><!--\n    !--><i class=\"h-icon-arrow-drop-down top-bar__dropdown-arrow\"></i>\n  </a>\n  <ul class=\"dropdown-menu pull-right\" role=\"menu\">\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a href=\"{{vm.serviceUrl('user',{user: vm.auth.username})}}\"\n         class=\"dropdown-menu__link\"\n         title=\"View all your annotations\"\n         target=\"_blank\">{{vm.auth.username}}</a>\n    </li>\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link\" href=\"{{vm.serviceUrl('account.settings')}}\" target=\"_blank\">Account settings</a>\n    </li>\n    <li class=\"dropdown-menu__row\">\n      <a class=\"dropdown-menu__link\" ng-click=\"vm.onShowHelpPanel()\">Help</a>\n    </li>\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link dropdown-menu__link--subtle\"\n         href=\"\" ng-click=\"vm.onLogout()\">Log out</a>\n    </li>\n  </ul>\n</div>\n\n<!-- Old controls -->\n<span ng-if=\"!vm.newStyle && vm.auth.status === 'unknown'\">⋯</span>\n<span ng-if=\"!vm.newStyle && vm.auth.status === 'logged-out'\">\n  <a href=\"\" ng-click=\"vm.onLogin()\">Log in</a>\n</span>\n<div ng-if=\"!vm.newStyle\"\n     class=\"pull-right login-control-menu\"\n     dropdown\n     keyboard-nav>\n  <span role=\"button\" data-toggle=\"dropdown\" dropdown-toggle>\n    {{vm.auth.username}}<!--\n    --><span class=\"provider\"\n             ng-if=\"vm.auth.provider\">/{{vm.auth.provider}}</span><!--\n    --><i class=\"h-icon-arrow-drop-down\"></i>\n  </span>\n  <ul class=\"dropdown-menu pull-right\" role=\"menu\">\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link\" href=\"{{vm.serviceUrl('account.settings')}}\" target=\"_blank\">Account</a>\n    </li>\n    <li class=\"dropdown-menu__row\" >\n      <a class=\"dropdown-menu__link\" ng-click=\"vm.onShowHelpPanel()\">Help</a>\n    </li>\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link\" href=\"{{vm.serviceUrl('user',{user: vm.auth.username})}}\"\n         target=\"_blank\">My Annotations</a>\n    </li>\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link\" href=\"\" ng-click=\"vm.onLogout()\">Log out</a>\n    </li>\n  </ul>\n</div>\n";
+module.exports = "<div class=\"dropdown-menu-btn\">\n  <button\n    class=\"dropdown-menu-btn__btn\"\n    ng-bind=\"label\"\n    ng-click=\"vm.onClick($event)\"\n    ng-disabled=\"isDisabled\">\n  </button>\n  <button\n    class=\"dropdown-menu-btn__dropdown-arrow\"\n    title=\"{{dropdownMenuLabel}}\"\n    ng-click=\"vm.toggleDropdown($event)\">\n    <div class=\"dropdown-menu-btn__dropdown-arrow-separator\"></div>\n    <div class=\"dropdown-menu-btn__dropdown-arrow-indicator\">\n      <div>▼</div>\n    </div>\n  </button>\n</div>\n";
 
 },{}],103:[function(require,module,exports){
-module.exports = "<div class=\"sheet\">\n  <i class=\"close h-icon-close\"\n     role=\"button\"\n     title=\"Close\"\n     ng-click=\"vm.onClose()\"></i>\n  <div class=\"form-vertical\"\n       ng-form=\"form\"\n       ng-submit=\"vm.submit(form['login'])\">\n    <div class=\"tab-content\">\n      <form data-value=\"login\"\n            class=\"form\"\n            name=\"login\"\n            form-validate\n            novalidate>\n\n        <p class=\"form-description form-error\"\n           ng-show=\"login.responseErrorMessage\">\n          {{login.responseErrorMessage}}\n        </p>\n\n        <div class=\"form-field\">\n          <label class=\"form-label\" for=\"field-login-username\">Username or email address:</label>\n          <input class=\"form-input\" type=\"text\" id=\"field-login-username\"\n                 name=\"username\" value=\"\"\n                 ng-model=\"model.username\"\n                 required autocapitalize=\"false\" h-autofocus />\n          <ul class=\"form-error-list\">\n            <li class=\"form-error\"\n                ng-show=\"login.username.$error.required\"\n                >Please enter your username or email address.</li>\n            <li class=\"form-error\"\n                ng-show=\"login.username.$error.response\"\n                ng-bind-html=\"login.username.responseErrorMessage\">\n            </li>\n          </ul>\n        </div>\n\n        <div class=\"form-field\">\n          <label class=\"form-label\" for=\"field-login-password\">Password:</label>\n          <input class=\"form-input\" id=\"field-login-password\"\n                 type=\"password\" name=\"password\" value=\"\"\n                 ng-model=\"model.password\"\n                 required autocapitalize=\"false\" autocorrect=\"false\" />\n          <ul class=\"form-error-list\">\n            <li class=\"form-error\"\n                ng-show=\"login.password.$error.required\"\n                >Please enter your password.</li>\n            <li class=\"form-error\"\n                ng-show=\"login.password.$error.response\"\n                >{{login.password.responseErrorMessage}}</li>\n          </ul>\n        </div>\n\n        <div class=\"form-actions\">\n          <div class=\"form-actions-message\">\n            <a href=\"{{vm.serviceUrl('forgot-password')}}\" target=\"_blank\">Forgot your password?</a>\n          </div>\n          <div class=\"form-actions-buttons\">\n            <button class=\"btn btn-primary\" type=\"submit\" name=\"login\"\n                    status-button=\"login\">Log in</button>\n          </div>\n        </div>\n      </form>\n    </div>\n  </div>\n</div>\n";
+module.exports = "<div ng-transclude ng-if=\"!vm.enabled\"></div>\n<div class=\"excerpt__container\" ng-if=\"vm.enabled\">\n  <div class=\"excerpt\" ng-style=\"vm.contentStyle()\">\n    <div ng-transclude></div>\n    <div ng-click=\"vm.expand()\"\n         ng-class=\"vm.bottomShadowStyles()\"\n         title=\"Show the full excerpt\"></div>\n    <div class=\"excerpt__inline-controls\"\n         ng-show=\"vm.showInlineControls()\">\n      <span class=\"excerpt__toggle-link\" ng-show=\"vm.isExpandable()\">\n        … <a ng-click=\"vm.toggle($event)\"\n            title=\"Show the full excerpt\">More</a>\n      </span>\n      <span class=\"excerpt__toggle-link\" ng-show=\"vm.isCollapsible()\">\n        <a ng-click=\"vm.toggle($event)\"\n            title=\"Show the first few lines only\">Less</a>\n      </span>\n    </div>\n  </div>\n</div>\n";
 
 },{}],104:[function(require,module,exports){
-module.exports = "<div ng-if=\"!readOnly\" class=\"markdown-tools\" ng-class=\"preview && 'disable'\">\n  <span class=\"markdown-preview-toggle\">\n    <a class=\"markdown-tools-badge h-icon-markdown\" href=\"https://help.github.com/articles/markdown-basics\" title=\"Parsed as Markdown\" target=\"_blank\"></a>\n    <a href=\"\" class=\"markdown-tools-toggle\" ng-click=\"togglePreview()\" ng-show=\"!preview\">Preview</a>\n    <a href=\"\" class=\"markdown-tools-toggle\" ng-click=\"togglePreview()\" ng-show=\"preview\">Write</a>\n  </span>\n  <i class=\"h-icon-format-bold markdown-tools-button\" ng-click=\"insertBold()\" title=\"Embolden text\"></i>\n  <i class=\"h-icon-format-italic markdown-tools-button\" ng-click=\"insertItalic()\" title=\"Italicize text\"></i>\n  <i class=\"h-icon-format-quote markdown-tools-button\" ng-click=\"insertQuote()\" title=\"Quote text\"></i>\n  <i class=\"h-icon-insert-link markdown-tools-button\" ng-click=\"insertLink()\" title=\"Insert link\"></i>\n  <i class=\"h-icon-insert-photo markdown-tools-button\" ng-click=\"insertIMG()\" title=\"Insert image\"></i>\n  <i class=\"h-icon-functions markdown-tools-button\" ng-click=\"insertMath()\" title=\"Insert mathematical notation (LaTex is supported)\"></i>\n  <i class=\"h-icon-format-list-numbered markdown-tools-button\" ng-click=\"insertNumList()\" title=\"Insert numbered list\"></i>\n  <i class=\"h-icon-format-list-bulleted markdown-tools-button\" ng-click=\"insertList()\" title=\"Insert list\"></i>\n</div>\n<textarea class=\"form-input form-textarea js-markdown-input\"\n          ng-show=\"showEditor()\"\n          ng-click=\"$event.stopPropagation()\"></textarea>\n<div class=\"markdown-body js-markdown-preview\"\n     ng-class=\"preview && 'markdown-preview'\"\n     ng-dblclick=\"togglePreview()\"\n     ng-show=\"!showEditor()\"></div>\n";
+module.exports = "<span ng-if=\"auth.status === 'logged-out'\"\n      ng-switch on=\"groups.focused().public\">\n  <i class=\"group-list-label__icon h-icon-public\" ng-switch-when=\"true\"></i><!-- nospace\n  !--><i class=\"group-list-label__icon h-icon-group\" ng-switch-default></i>\n  <span class=\"group-list-label__label\">{{groups.focused().name}}</span>\n</span>\n\n<div class=\"pull-right\"\n     ng-if=\"auth.status === 'logged-in'\"\n     dropdown\n     keyboard-nav>\n  <div class=\"dropdown-toggle\"\n        dropdown-toggle\n        data-toggle=\"dropdown\"\n        role=\"button\"\n        ng-switch on=\"groups.focused().public\"\n        title=\"Change the selected group\">\n    <i class=\"group-list-label__icon h-icon-public\" ng-switch-when=\"true\"></i><!-- nospace\n    !--><i class=\"group-list-label__icon h-icon-group\" ng-switch-default></i>\n    <span class=\"group-list-label__label\">{{groups.focused().name}}</span><!-- nospace\n    !--><i class=\"h-icon-arrow-drop-down\"></i>\n  </div>\n  <div class=\"dropdown-menu__top-arrow\"></div>\n  <ul class=\"dropdown-menu pull-none\" role=\"menu\">\n    <li class=\"dropdown-menu__row dropdown-menu__row--unpadded \"\n        ng-repeat=\"group in groups.all()\">\n      <div ng-class=\"{'group-item': true, selected: group.id == groups.focused().id}\"\n           ng-click=\"focusGroup(group.id)\">\n        <!-- the group icon !-->\n        <div class=\"group-icon-container\" ng-switch on=\"group.public\">\n          <i class=\"h-icon-public\" ng-switch-when=\"true\"></i>\n          <i class=\"h-icon-group\" ng-switch-default></i>\n        </div>\n        <!-- the group name and share link !-->\n        <div class=\"group-details\">\n          <div class=\"group-name-container\">\n            <a class=\"group-name-link\"\n               href=\"\"\n               title=\"{{ group.public ? 'Show public annotations' : 'Show and create annotations in ' + group.name }}\">\n               {{group.name}}\n            </a>\n          </div>\n          <div class=\"share-link-container\" ng-click=\"$event.stopPropagation()\" ng-if=\"!group.public\">\n            <a class=\"share-link\" href=\"{{group.url}}\" target=\"_blank\">\n              View group activity and invite others\n            </a>\n          </div>\n        </div>\n        <!-- the 'Leave group' icon !-->\n        <div class=\"group-cancel-icon-container\" ng-click=\"$event.stopPropagation()\">\n          <i class=\"h-icon-cancel-outline btn--cancel\"\n             ng-if=\"!group.public\"\n             ng-click=\"leaveGroup(group.id)\"\n             title=\"Leave '{{group.name}}'\"></i>\n        </div>\n      </div>\n    </li>\n    <li class=\"dropdown-menu__row dropdown-menu__row--unpadded new-group-btn\">\n      <div class=\"group-item\" ng-click=\"createNewGroup()\">\n        <div class=\"group-icon-container\"><i class=\"h-icon-add\"></i></div>\n        <div class=\"group-details\">\n          <a href=\"\" class=\"group-name-link\" title=\"Create a new group to share annotations\">\n            New group\n          </a>\n        </div>\n      </div>\n    </li>\n  </ul>\n</div>\n";
 
 },{}],105:[function(require,module,exports){
-module.exports = "<div dropdown=\"\" class=\"publish-annotation-btn__btn\" is-open=\"vm.showDropdown\" keyboard-nav>\n  <dropdown-menu-btn\n    label=\"'Post to ' + vm.publishDestination()\"\n    on-click=\"vm.onSave()\"\n    on-toggle-dropdown=\"vm.showDropdown = !vm.showDropdown\"\n    title=\"Publish this annotation to {{vm.publishDestination()}}\"\n    dropdown-menu-label=\"Change annotation sharing setting\"\n    is-disabled=\"!vm.canPost\">\n  </dropdown-menu-btn>\n  <div class=\"publish-annotation-btn__dropdown-container\">\n    <ul class=\"dropdown-menu pull-center group-list publish-annotation-btn__dropdown-menu\" role=\"menu\">\n      <li class=\"dropdown-menu__row\" ng-click=\"vm.setPrivacy('shared')\">\n        <div class=\"group-item\">\n          <div class=\"group-icon-container\">\n            <i class=\"small\" ng-class=\"'h-icon-' + vm.groupType()\"></i>\n          </div>\n          <div class=\"group-details\">\n            <div class=\"group-name-container\">\n              <a href=\"\" class=\"group-name-link\" ng-bind=\"vm.group.name\"></a>\n            </div>\n          </div>\n        </div>\n      </li>\n      <li class=\"dropdown-menu__row\" ng-click=\"vm.setPrivacy('private')\">\n        <div class=\"group-item\">\n          <div class=\"group-icon-container\">\n            <i class=\"small h-icon-lock\"></i>\n          </div>\n          <div class=\"group-details\">\n            <div class=\"group-name-container\">\n              <a href=\"\" class=\"group-name-link\" ng-bind=\"vm.privateLabel\"></a>\n            </div>\n          </div>\n        </div>\n      </li>\n    </ul>\n  </div>\n</div>\n<button class=\"publish-annotation-cancel-btn btn-clean\"\n        ng-click=\"vm.onCancel()\"\n        title=\"Cancel changes to this annotation\"\n        >\n  <i class=\"h-icon-cancel-outline publish-annotation-cancel-btn__icon btn-icon\"></i> Cancel\n</button>\n";
+module.exports = "\n<a class=\"help-panel-content__link\"\n   href=\"mailto:support@hypothes.is?subject=Hypothesis%20support&amp;body=Version:%20{{ vm.version }}%0D%0AUser%20Agent:%20{{vm.userAgent}}%0D%0AURL:%20{{ vm.url }}%0D%0APDF%20fingerprint:%20{{ vm.documentFingerprint ? vm.documentFingerprint : '-' }}%0D%0AUsername:%20{{ vm.auth.username ? vm.auth.username : '-' }}%0D%0ADate:%20{{ vm.dateTime | date:'dd MMM yyyy HH:mm:ss Z' }} \"\n>Send us a message</a>\n";
 
 },{}],106:[function(require,module,exports){
-module.exports = "<form class=\"simple-search-form\"\n      name=\"searchForm\"\n      ng-class=\"!vm.query && 'simple-search-inactive'\">\n  <input class=\"simple-search-input\"\n         type=\"text\"\n         name=\"query\"\n         placeholder=\"{{vm.loading && 'Loading' || 'Search'}}…\"\n         ng-disabled=\"vm.loading\"\n         ng-class=\"vm.inputClasses()\"/>\n  <button type=\"button\" class=\"simple-search-icon top-bar__btn\" ng-hide=\"vm.loading\">\n    <i class=\"h-icon-search\"></i>\n  </button>\n  <button type=\"button\" class=\"simple-search-icon btn btn-clean\" ng-show=\"vm.loading\" disabled>\n    <span class=\"btn-icon\"><span class=\"spinner\"></span></span>\n  </button>\n</form>\n";
+module.exports = "<div class=\"help-panel\">\n  <i class=\"close h-icon-close\"\n    role=\"button\"\n    title=\"Close\"\n    ng-click=\"vm.onClose()\"></i>\n\n  <header class=\"help-panel-title\">\n    Help\n  </header>\n  <div class=\"help-panel-content\">\n    <help-link\n      version=\"vm.version\"\n      user-agent=\"vm.userAgent\"\n      url=\"vm.url\"\n      document-fingerprint=\"vm.documentFingerprint\"\n      auth=\"vm.auth\"\n      date-time=\"vm.dateTime\">\n    </help-link>\n    if you have any questions or want to give us feedback.\n    You can also visit our <a class=\"help-panel-content__link\" href=\"{{vm.serviceUrl('help')}}\" target=\"_blank\"> help documents</a>.\n  </div>\n  <header class=\"help-panel-title\">\n    About this version\n  </header>\n  <dl class=\"help-panel-content\">\n    <dt class=\"help-panel-content__key\">Version: </dt>\n    <dd class=\"help-panel-content__val\">{{ vm.version }}</dd>\n    <dt class=\"help-panel-content__key\">User agent: </dt>\n    <dd class=\"help-panel-content__val\">{{ vm.userAgent }}</dd>\n    <div ng-if=\"vm.url\">\n      <dt class=\"help-panel-content__key\">URL: </dt>\n      <dd class=\"help-panel-content__val\">{{ vm.url }}</dd>\n    </div>\n    <div ng-if=\"vm.documentFingerprint\">\n      <dt class=\"help-panel-content__key\">PDF fingerprint: </dt>\n      <dd class=\"help-panel-content__val\">{{ vm.documentFingerprint }}</dd>\n    </div>\n    <div ng-if=\"vm.auth.userid\">\n      <dt class=\"help-panel-content__key\">Username: </dt>\n      <dd class=\"help-panel-content__val\">{{ vm.auth.username }}</dd>\n    </div>\n    <dt class=\"help-panel-content__key\">Date: </dt>\n    <dd class=\"help-panel-content__val\">{{ vm.dateTime | date:'dd MMM yyyy HH:mm:ss Z' }}</dd>\n  </div>\n</div>\n";
 
 },{}],107:[function(require,module,exports){
-module.exports = "<div class=\"search-status-bar\" ng-if=\"vm.filterActive\">\n  <button class=\"primary-action-btn primary-action-btn--short\"\n          ng-click=\"vm.onClearSelection()\"\n          title=\"Clear the search filter and show all annotations\"\n  >\n    <i class=\"primary-action-btn__icon h-icon-close\"></i> Clear search\n  </button>\n  <span ng-pluralize\n           count=\"vm.filterMatchCount\"\n           when=\"{'0': 'No results for “{{vm.searchQuery}}”',\n                  'one': '1 search result',\n                  'other': '{} search results'}\"></span>\n</div>\n<div class=\"search-status-bar\" ng-if=\"!vm.filterActive && vm.selectionCount > 0\">\n  <button class=\"primary-action-btn primary-action-btn--short\"\n          ng-click=\"vm.onClearSelection()\"\n          title=\"Clear the selection and show all annotations\">\n    <span ng-if=\"!vm.selectedTab || vm.selectedTab === vm.TAB_ORPHANS\">\n      Show all annotations and notes\n    </span>\n    <span ng-if=\"vm.selectedTab === vm.TAB_ANNOTATIONS\">\n      Show all annotations\n      <span ng-if=\"vm.totalAnnotations > 1\">\n        ({{vm.totalAnnotations}})\n      </span>\n    </span>\n    <span ng-if=\"vm.selectedTab === vm.TAB_NOTES\">\n      Show all notes\n      <span ng-if=\"vm.totalNotes > 1\">\n        ({{vm.totalNotes}})\n      </span>\n    </span>\n  </button>\n\n</div>\n";
+module.exports = "<!-- message to display to loggedout users when they visit direct linked annotations -->\n<li class=\"loggedout-message\">\n  <span>\n    This is a public annotation created with Hypothesis.\n    <br>\n    To reply or make your own annotations on this document,\n    <a class=\"loggedout-message__link\" href=\"{{vm.serviceUrl('signup')}}\" target=\"_blank\">create a free account</a>\n    or\n    <a class=\"loggedout-message__link\" href=\"\" ng-click=\"vm.onLogin()\">log in</a>.\n  </span>\n  <span class=\"loggedout-message-logo\">\n    <a href=\"https://hypothes.is\">\n      <i class=\"h-icon-hypothesis-logo loggedout-message-logo__icon\"></i>\n    </a>\n  </span>\n</li>\n";
 
 },{}],108:[function(require,module,exports){
-module.exports = "<!-- Tabbed display of annotations and notes. -->\n<div class=\"selection-tabs\">\n  <a class=\"selection-tabs__type\"\n     href=\"#\"\n     ng-class=\"{'is-selected': vm.selectedTab === vm.TAB_ANNOTATIONS}\"\n     h-on-touch=\"vm.selectTab(vm.TAB_ANNOTATIONS)\">\n    Annotations\n    <span class=\"selection-tabs__count\"\n      ng-if=\"vm.totalAnnotations > 0 && !vm.isWaitingToAnchorAnnotations\">\n      {{ vm.totalAnnotations }}\n    </span>\n  </a>\n  <a class=\"selection-tabs__type\"\n     href=\"#\"\n     ng-class=\"{'is-selected': vm.selectedTab === vm.TAB_NOTES}\"\n     h-on-touch=\"vm.selectTab(vm.TAB_NOTES)\">\n    Page Notes\n    <span class=\"selection-tabs__count\"\n      ng-if=\"vm.totalNotes > 0 && !vm.isWaitingToAnchorAnnotations\">\n      {{ vm.totalNotes }}\n    </span>\n  </a>\n  <a class=\"selection-tabs__type selection-tabs__type--orphan\"\n    ng-if=\"vm.orphansTabFlagEnabled() && vm.totalOrphans > 0\"\n    href=\"#\"\n    ng-class=\"{'is-selected': vm.selectedTab === vm.TAB_ORPHANS}\"\n    h-on-touch=\"vm.selectTab(vm.TAB_ORPHANS)\">\n    Orphans\n    <span class=\"selection-tabs__count\"\n      ng-if=\"vm.totalOrphans > 0 && !vm.isWaitingToAnchorAnnotations\">\n      {{ vm.totalOrphans }}\n    </span>\n  </a>\n</div>\n<div ng-if=\"!vm.isLoading()\" class=\"selection-tabs__empty-message\">\n  <div ng-if=\"vm.showNotesUnavailableMessage()\"  class=\"annotation-unavailable-message\">\n    <p class=\"annotation-unavailable-message__label\">\n      There are no page notes in this group.\n      <br />\n      Create one by clicking the\n      <i class=\"help-icon h-icon-note\"></i>\n      button.\n    </p>\n  </div>\n  <div ng-if=\"vm.showAnnotationsUnavailableMessage()\"  class=\"annotation-unavailable-message\">\n    <p class=\"annotation-unavailable-message__label\">\n      There are no annotations in this group.\n      <br />\n      Create one by selecting some text and clicking the\n      <i class=\"help-icon h-icon-annotate\"></i> button.\n    </p>\n  </div>\n</div>\n";
+module.exports = "<!-- New controls -->\n<span class=\"login-text\"\n      ng-if=\"vm.newStyle && vm.auth.status === 'unknown'\">⋯</span>\n<span class=\"login-text\"\n      ng-if=\"vm.newStyle && vm.auth.status === 'logged-out'\">\n  <a href=\"{{vm.serviceUrl('signup')}}\" target=\"_blank\">Sign up</a>\n  / <a href=\"\" ng-click=\"vm.onLogin()\">Log in</a>\n</span>\n<div ng-if=\"vm.newStyle\"\n     class=\"pull-right login-control-menu\"\n     dropdown\n     keyboard-nav>\n  <a role=\"button\"\n     class=\"top-bar__btn\"\n     data-toggle=\"dropdown\"\n     dropdown-toggle\n     title=\"{{vm.auth.username}}\">\n    <i class=\"h-icon-account\" ng-if=\"vm.auth.status === 'logged-in'\"></i><!--\n    !--><i class=\"h-icon-arrow-drop-down top-bar__dropdown-arrow\"></i>\n  </a>\n  <ul class=\"dropdown-menu pull-right\" role=\"menu\">\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a href=\"{{vm.serviceUrl('user',{user: vm.auth.username})}}\"\n         class=\"dropdown-menu__link\"\n         title=\"View all your annotations\"\n         target=\"_blank\">{{vm.auth.username}}</a>\n    </li>\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link\" href=\"{{vm.serviceUrl('account.settings')}}\" target=\"_blank\">Account settings</a>\n    </li>\n    <li class=\"dropdown-menu__row\">\n      <a class=\"dropdown-menu__link\" ng-click=\"vm.onShowHelpPanel()\">Help</a>\n    </li>\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link dropdown-menu__link--subtle\"\n         href=\"\" ng-click=\"vm.onLogout()\">Log out</a>\n    </li>\n  </ul>\n</div>\n\n<!-- Old controls -->\n<span ng-if=\"!vm.newStyle && vm.auth.status === 'unknown'\">⋯</span>\n<span ng-if=\"!vm.newStyle && vm.auth.status === 'logged-out'\">\n  <a href=\"\" ng-click=\"vm.onLogin()\">Log in</a>\n</span>\n<div ng-if=\"!vm.newStyle\"\n     class=\"pull-right login-control-menu\"\n     dropdown\n     keyboard-nav>\n  <span role=\"button\" data-toggle=\"dropdown\" dropdown-toggle>\n    {{vm.auth.username}}<!--\n    --><span class=\"provider\"\n             ng-if=\"vm.auth.provider\">/{{vm.auth.provider}}</span><!--\n    --><i class=\"h-icon-arrow-drop-down\"></i>\n  </span>\n  <ul class=\"dropdown-menu pull-right\" role=\"menu\">\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link\" href=\"{{vm.serviceUrl('account.settings')}}\" target=\"_blank\">Account</a>\n    </li>\n    <li class=\"dropdown-menu__row\" >\n      <a class=\"dropdown-menu__link\" ng-click=\"vm.onShowHelpPanel()\">Help</a>\n    </li>\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link\" href=\"{{vm.serviceUrl('user',{user: vm.auth.username})}}\"\n         target=\"_blank\">My Annotations</a>\n    </li>\n    <li class=\"dropdown-menu__row\" ng-if=\"vm.auth.status === 'logged-in'\">\n      <a class=\"dropdown-menu__link\" href=\"\" ng-click=\"vm.onLogout()\">Log out</a>\n    </li>\n  </ul>\n</div>\n";
 
 },{}],109:[function(require,module,exports){
-module.exports = "<div class=\"sheet\">\n  <i class=\"close h-icon-close\"\n     role=\"button\"\n     title=\"Close\"\n     ng-click=\"vm.onClose()\"></i>\n  <div class=\"form-vertical\">\n    <ul class=\"nav nav-tabs\">\n      <li class=\"active\"><a href=\"\">Share</a></li>\n    </ul>\n    <div class=\"tab-content\">\n      <p>Share the link below to show anyone these annotations and invite them to contribute their own.</p>\n      <p><input class=\"js-via form-input\"\n          type=\"text\"\n          ng-value=\"vm.viaPageLink\"\n          readonly /></p>\n      <p class=\"share-link-icons\">\n      <a href=\"https://twitter.com/intent/tweet?url={{vm.viaPageLink | urlEncode}}&hashtags=annotated\"\n         target=\"_blank\"\n         title=\"Tweet link\"\n         class=\"share-link-icon h-icon-twitter\"></a>\n      <a href=\"https://www.facebook.com/sharer/sharer.php?u={{vm.viaPageLink | urlEncode}}\"\n         target=\"_blank\"\n         title=\"Share on Facebook\"\n         class=\"share-link-icon h-icon-facebook\"></a>\n      <a href=\"https://plus.google.com/share?url={{vm.viaPageLink | urlEncode}}\"\n         target=\"_blank\"\n         title=\"Post on Google Plus\"\n         class=\"share-link-icon h-icon-google-plus\"></a>\n      <a href=\"mailto:?subject=Let's%20Annotate&amp;body={{vm.viaPageLink}}\"\n         title=\"Share via email\"\n         class=\"share-link-icon h-icon-mail\"></a>\n      </p>\n    </div>\n  </div>\n</div>\n";
+module.exports = "<div class=\"sheet\">\n  <i class=\"close h-icon-close\"\n     role=\"button\"\n     title=\"Close\"\n     ng-click=\"vm.onClose()\"></i>\n  <div class=\"form-vertical\"\n       ng-form=\"form\"\n       ng-submit=\"vm.submit(form['login'])\">\n    <div class=\"tab-content\">\n      <form data-value=\"login\"\n            class=\"form\"\n            name=\"login\"\n            form-validate\n            novalidate>\n\n        <p class=\"form-description form-error\"\n           ng-show=\"login.responseErrorMessage\">\n          {{login.responseErrorMessage}}\n        </p>\n\n        <div class=\"form-field\">\n          <label class=\"form-label\" for=\"field-login-username\">Username or email address:</label>\n          <input class=\"form-input\" type=\"text\" id=\"field-login-username\"\n                 name=\"username\" value=\"\"\n                 ng-model=\"model.username\"\n                 required autocapitalize=\"false\" h-autofocus />\n          <ul class=\"form-error-list\">\n            <li class=\"form-error\"\n                ng-show=\"login.username.$error.required\"\n                >Please enter your username or email address.</li>\n            <li class=\"form-error\"\n                ng-show=\"login.username.$error.response\"\n                ng-bind-html=\"login.username.responseErrorMessage\">\n            </li>\n          </ul>\n        </div>\n\n        <div class=\"form-field\">\n          <label class=\"form-label\" for=\"field-login-password\">Password:</label>\n          <input class=\"form-input\" id=\"field-login-password\"\n                 type=\"password\" name=\"password\" value=\"\"\n                 ng-model=\"model.password\"\n                 required autocapitalize=\"false\" autocorrect=\"false\" />\n          <ul class=\"form-error-list\">\n            <li class=\"form-error\"\n                ng-show=\"login.password.$error.required\"\n                >Please enter your password.</li>\n            <li class=\"form-error\"\n                ng-show=\"login.password.$error.response\"\n                >{{login.password.responseErrorMessage}}</li>\n          </ul>\n        </div>\n\n        <div class=\"form-actions\">\n          <div class=\"form-actions-message\">\n            <a href=\"{{vm.serviceUrl('forgot-password')}}\" target=\"_blank\">Forgot your password?</a>\n          </div>\n          <div class=\"form-actions-buttons\">\n            <button class=\"btn btn-primary\" type=\"submit\" name=\"login\"\n                    status-button=\"login\">Log in</button>\n          </div>\n        </div>\n      </form>\n    </div>\n  </div>\n</div>\n";
 
 },{}],110:[function(require,module,exports){
-module.exports = "<div class=\"sheet\" ng-if=\"vm.showSidebarTutorial()\">\n  <i class=\"close h-icon-close\" role=\"button\" title=\"Close\"\n     ng-click=\"vm.dismiss()\"></i>\n  <h1 class=\"sidebar-tutorial__header\">How to get started</h1>\n  <ol class=\"sidebar-tutorial__list\">\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To create an annotation, select text and click the\n        <i class=\"h-icon-annotate\"></i>&nbsp;button.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To add a note to the page you are viewing, click the\n        <i class=\"h-icon-note\"></i>&nbsp;button.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To create a highlight, select text and click the\n        <i class=\"h-icon-highlight\"></i>&nbsp;button.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To reply to an annotation, click the\n        <i class=\"h-icon-annotation-reply\"></i>&nbsp;<strong>Reply</strong>&nbsp;link.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To share an annotated page, click the\n        <i class=\"h-icon-annotation-share\"></i>&nbsp;button at the top.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To create a private group, select <strong>Public</strong>,\n        open the dropdown, click&nbsp;<strong>+&nbsp;New&nbsp;group</strong>.\n      </p>\n    </li>\n  </ol>\n</div>\n";
+module.exports = "<div ng-if=\"!readOnly\" class=\"markdown-tools\" ng-class=\"preview && 'disable'\">\n  <span class=\"markdown-preview-toggle\">\n    <a class=\"markdown-tools-badge h-icon-markdown\" href=\"https://help.github.com/articles/markdown-basics\" title=\"Parsed as Markdown\" target=\"_blank\"></a>\n    <a href=\"\" class=\"markdown-tools-toggle\" ng-click=\"togglePreview()\" ng-show=\"!preview\">Preview</a>\n    <a href=\"\" class=\"markdown-tools-toggle\" ng-click=\"togglePreview()\" ng-show=\"preview\">Write</a>\n  </span>\n  <i class=\"h-icon-format-bold markdown-tools-button\" ng-click=\"insertBold()\" title=\"Embolden text\"></i>\n  <i class=\"h-icon-format-italic markdown-tools-button\" ng-click=\"insertItalic()\" title=\"Italicize text\"></i>\n  <i class=\"h-icon-format-quote markdown-tools-button\" ng-click=\"insertQuote()\" title=\"Quote text\"></i>\n  <i class=\"h-icon-insert-link markdown-tools-button\" ng-click=\"insertLink()\" title=\"Insert link\"></i>\n  <i class=\"h-icon-insert-photo markdown-tools-button\" ng-click=\"insertIMG()\" title=\"Insert image\"></i>\n  <i class=\"h-icon-functions markdown-tools-button\" ng-click=\"insertMath()\" title=\"Insert mathematical notation (LaTex is supported)\"></i>\n  <i class=\"h-icon-format-list-numbered markdown-tools-button\" ng-click=\"insertNumList()\" title=\"Insert numbered list\"></i>\n  <i class=\"h-icon-format-list-bulleted markdown-tools-button\" ng-click=\"insertList()\" title=\"Insert list\"></i>\n</div>\n<textarea class=\"form-input form-textarea js-markdown-input\"\n          ng-show=\"showEditor()\"\n          ng-click=\"$event.stopPropagation()\"></textarea>\n<div class=\"markdown-body js-markdown-preview\"\n     ng-class=\"preview && 'markdown-preview'\"\n     ng-dblclick=\"togglePreview()\"\n     ng-show=\"!showEditor()\"></div>\n";
 
 },{}],111:[function(require,module,exports){
-module.exports = "<span class=\"ng-cloak\" dropdown keyboard-nav>\n  <button\n    type=\"button\"\n    class=\"top-bar__btn\"\n    dropdown-toggle\n    title=\"Sort by {{sortKey}}\">\n    <i class=\"h-icon-sort\"></i>\n  </button>\n  <div class=\"dropdown-menu__top-arrow\"></div>\n  <ul class=\"dropdown-menu pull-right\" role=\"menu\">\n    <li class=\"dropdown-menu__row\"\n        ng-repeat=\"key in sortKeysAvailable\"\n        ng-click=\"onChangeSortKey({sortKey: key})\"\n        ><span class=\"dropdown-menu-radio\"\n               ng-class=\"{'is-selected' : sortKey === key}\"\n        ></span><a class=\"dropdown-menu__link\" href=\"\">{{key}}</a></li>\n  </ul>\n</span>\n";
+module.exports = "<div dropdown=\"\" class=\"publish-annotation-btn__btn\" is-open=\"vm.showDropdown\" keyboard-nav>\n  <dropdown-menu-btn\n    label=\"'Post to ' + vm.publishDestination()\"\n    on-click=\"vm.onSave()\"\n    on-toggle-dropdown=\"vm.showDropdown = !vm.showDropdown\"\n    title=\"Publish this annotation to {{vm.publishDestination()}}\"\n    dropdown-menu-label=\"Change annotation sharing setting\"\n    is-disabled=\"!vm.canPost\">\n  </dropdown-menu-btn>\n  <div class=\"publish-annotation-btn__dropdown-container\">\n    <ul class=\"dropdown-menu pull-center group-list publish-annotation-btn__dropdown-menu\" role=\"menu\">\n      <li class=\"dropdown-menu__row\" ng-click=\"vm.setPrivacy('shared')\">\n        <div class=\"group-item\">\n          <div class=\"group-icon-container\">\n            <i class=\"small\" ng-class=\"'h-icon-' + vm.groupType()\"></i>\n          </div>\n          <div class=\"group-details\">\n            <div class=\"group-name-container\">\n              <a href=\"\" class=\"group-name-link\" ng-bind=\"vm.group.name\"></a>\n            </div>\n          </div>\n        </div>\n      </li>\n      <li class=\"dropdown-menu__row\" ng-click=\"vm.setPrivacy('private')\">\n        <div class=\"group-item\">\n          <div class=\"group-icon-container\">\n            <i class=\"small h-icon-lock\"></i>\n          </div>\n          <div class=\"group-details\">\n            <div class=\"group-name-container\">\n              <a href=\"\" class=\"group-name-link\" ng-bind=\"vm.privateLabel\"></a>\n            </div>\n          </div>\n        </div>\n      </li>\n    </ul>\n  </div>\n</div>\n<button class=\"publish-annotation-cancel-btn btn-clean\"\n        ng-click=\"vm.onCancel()\"\n        title=\"Cancel changes to this annotation\"\n        >\n  <i class=\"h-icon-cancel-outline publish-annotation-cancel-btn__icon btn-icon\"></i> Cancel\n</button>\n";
 
 },{}],112:[function(require,module,exports){
-module.exports = "<tags-input ng-model=\"vm.tagList\"\n  name=\"tags\"\n  class=\"tags\"\n  placeholder=\"Add tags…\"\n  min-length=\"1\"\n  replace-spaces-with-dashes=\"false\"\n  enable-editing-last-tag=\"true\"\n  on-tag-added=\"vm.onTagsChanged()\"\n  on-tag-removed=\"vm.onTagsChanged()\">\n  <auto-complete source=\"vm.autocomplete($query)\"\n    min-length=\"1\"\n    max-results-to-show=\"10\"></auto-complete>\n</tags-input>\n";
+module.exports = "<form class=\"simple-search-form\"\n      name=\"searchForm\"\n      ng-class=\"!vm.query && 'simple-search-inactive'\">\n  <input class=\"simple-search-input\"\n         type=\"text\"\n         name=\"query\"\n         placeholder=\"{{vm.loading && 'Loading' || 'Search'}}…\"\n         ng-disabled=\"vm.loading\"\n         ng-class=\"vm.inputClasses()\"/>\n  <button type=\"button\" class=\"simple-search-icon top-bar__btn\" ng-hide=\"vm.loading\">\n    <i class=\"h-icon-search\"></i>\n  </button>\n  <button type=\"button\" class=\"simple-search-icon btn btn-clean\" ng-show=\"vm.loading\" disabled>\n    <span class=\"btn-icon\"><span class=\"spinner\"></span></span>\n  </button>\n</form>\n";
 
 },{}],113:[function(require,module,exports){
-module.exports = "<ul class=\"thread-list\">\n  <li class=\"thread-list__spacer\"\n      ng-style=\"{height: vm.virtualThreadList.offscreenUpperHeight}\"></li>\n  <li id=\"{{child.id}}\"\n      class=\"thread-list__card\"\n      ng-mouseenter=\"vm.onFocus({annotation: child.annotation})\"\n      ng-click=\"vm.onSelect({annotation: child.annotation})\"\n      ng-mouseleave=\"vm.onFocus({annotation: null})\"\n      ng-repeat=\"child in vm.virtualThreadList.visibleThreads track by child.id\">\n      <annotation-thread\n        thread=\"child\"\n        show-document-info=\"vm.showDocumentInfo\"\n        on-change-collapsed=\"vm.onChangeCollapsed({id: id, collapsed: collapsed})\"\n        on-force-visible=\"vm.onForceVisible({thread: thread})\">\n      </annotation-thread>\n  </li>\n  <li class=\"thread-list__spacer\"\n      ng-style=\"{height: vm.virtualThreadList.offscreenLowerHeight}\"></li>\n</ul>\n";
+module.exports = "<div class=\"search-status-bar\" ng-if=\"vm.filterActive\">\n  <button class=\"primary-action-btn primary-action-btn--short\"\n          ng-click=\"vm.onClearSelection()\"\n          title=\"Clear the search filter and show all annotations\"\n  >\n    <i class=\"primary-action-btn__icon h-icon-close\"></i> Clear search\n  </button>\n  <span ng-pluralize\n           count=\"vm.filterMatchCount\"\n           when=\"{'0': 'No results for “{{vm.searchQuery}}”',\n                  'one': '1 search result',\n                  'other': '{} search results'}\"></span>\n</div>\n<div class=\"search-status-bar\" ng-if=\"!vm.filterActive && vm.selectionCount > 0\">\n  <button class=\"primary-action-btn primary-action-btn--short\"\n          ng-click=\"vm.onClearSelection()\"\n          title=\"Clear the selection and show all annotations\">\n    <span ng-if=\"!vm.selectedTab || vm.selectedTab === vm.TAB_ORPHANS\">\n      Show all annotations and notes\n    </span>\n    <span ng-if=\"vm.selectedTab === vm.TAB_ANNOTATIONS\">\n      Show all annotations\n      <span ng-if=\"vm.totalAnnotations > 1\">\n        ({{vm.totalAnnotations}})\n      </span>\n    </span>\n    <span ng-if=\"vm.selectedTab === vm.TAB_NOTES\">\n      Show all notes\n      <span ng-if=\"vm.totalNotes > 1\">\n        ({{vm.totalNotes}})\n      </span>\n    </span>\n  </button>\n\n</div>\n";
 
 },{}],114:[function(require,module,exports){
-module.exports = "<!-- top bar for the sidebar and the stream.\n!-->\n<div class=\"top-bar\" ng-class=\"frame.visible && 'shown'\" ng-cloak>\n  <!-- Legacy design for top bar, as used in the stream !-->\n  <div class=\"top-bar__inner content\" ng-if=\"::!isSidebar\">\n    <search-input\n      class=\"search-input\"\n      query=\"searchController.query()\"\n      on-search=\"searchController.update($query)\"\n      always-expanded=\"true\">\n    </search-input>\n    <div class=\"top-bar__expander\"></div>\n    <login-control\n      auth=\"auth\"\n      new-style=\"false\"\n      on-show-help-panel=\"onShowHelpPanel()\"\n      on-login=\"onLogin()\"\n      on-logout=\"onLogout()\">\n    </login-control>\n  </div>\n  <!-- New design for the top bar, as used in the sidebar.\n\n       The inner div is styled with 'content' to center it in\n       the stream view.\n  !-->\n  <div class=\"top-bar__inner content\" ng-if=\"::isSidebar\">\n    <group-list class=\"group-list\" auth=\"auth\"></group-list>\n    <div class=\"top-bar__expander\"></div>\n    <search-input\n      class=\"search-input\"\n      query=\"searchController.query()\"\n      on-search=\"searchController.update($query)\"\n      title=\"Filter the annotation list\">\n    </search-input>\n    <sort-dropdown\n      sort-keys-available=\"sortKeysAvailable\"\n      sort-key=\"sortKey\"\n      on-change-sort-key=\"onChangeSortKey({sortKey: sortKey})\">\n    </sort-dropdown>\n    <a class=\"top-bar__btn\"\n       ng-click=\"onSharePage()\"\n       title=\"Share this page\">\n      <i class=\"h-icon-annotation-share\"></i>\n    </a>\n    <login-control\n      class=\"login-control\"\n      auth=\"auth\"\n      new-style=\"true\"\n      on-show-help-panel=\"onShowHelpPanel()\"\n      on-login=\"onLogin()\"\n      on-logout=\"onLogout()\">\n    </login-control>\n  </div>\n</div>\n";
+module.exports = "<!-- Tabbed display of annotations and notes. -->\n<div class=\"selection-tabs\">\n  <a class=\"selection-tabs__type\"\n     href=\"#\"\n     ng-class=\"{'is-selected': vm.selectedTab === vm.TAB_ANNOTATIONS}\"\n     h-on-touch=\"vm.selectTab(vm.TAB_ANNOTATIONS)\">\n    Annotations\n    <span class=\"selection-tabs__count\"\n      ng-if=\"vm.totalAnnotations > 0 && !vm.isWaitingToAnchorAnnotations\">\n      {{ vm.totalAnnotations }}\n    </span>\n  </a>\n  <a class=\"selection-tabs__type\"\n     href=\"#\"\n     ng-class=\"{'is-selected': vm.selectedTab === vm.TAB_NOTES}\"\n     h-on-touch=\"vm.selectTab(vm.TAB_NOTES)\">\n    Page Notes\n    <span class=\"selection-tabs__count\"\n      ng-if=\"vm.totalNotes > 0 && !vm.isWaitingToAnchorAnnotations\">\n      {{ vm.totalNotes }}\n    </span>\n  </a>\n  <a class=\"selection-tabs__type selection-tabs__type--orphan\"\n    ng-if=\"vm.orphansTabFlagEnabled() && vm.totalOrphans > 0\"\n    href=\"#\"\n    ng-class=\"{'is-selected': vm.selectedTab === vm.TAB_ORPHANS}\"\n    h-on-touch=\"vm.selectTab(vm.TAB_ORPHANS)\">\n    Orphans\n    <span class=\"selection-tabs__count\"\n      ng-if=\"vm.totalOrphans > 0 && !vm.isWaitingToAnchorAnnotations\">\n      {{ vm.totalOrphans }}\n    </span>\n  </a>\n</div>\n<div ng-if=\"!vm.isLoading()\" class=\"selection-tabs__empty-message\">\n  <div ng-if=\"vm.showNotesUnavailableMessage()\"  class=\"annotation-unavailable-message\">\n    <p class=\"annotation-unavailable-message__label\">\n      There are no page notes in this group.\n      <br />\n      Create one by clicking the\n      <i class=\"help-icon h-icon-note\"></i>\n      button.\n    </p>\n  </div>\n  <div ng-if=\"vm.showAnnotationsUnavailableMessage()\"  class=\"annotation-unavailable-message\">\n    <p class=\"annotation-unavailable-message__label\">\n      There are no annotations in this group.\n      <br />\n      Create one by selecting some text and clicking the\n      <i class=\"help-icon h-icon-annotate\"></i> button.\n    </p>\n  </div>\n</div>\n";
 
 },{}],115:[function(require,module,exports){
-module.exports = "<selection-tabs\n  ng-if=\"!search.query() && selectedAnnotationCount() === 0\"\n  is-waiting-to-anchor-annotations=\"waitingToAnchorAnnotations\"\n  is-loading=\"isLoading\"\n  selected-tab=\"selectedTab\"\n  total-annotations=\"totalAnnotations\"\n  total-notes=\"totalNotes\"\n  total-orphans=\"totalOrphans\">\n</selection-tabs>\n\n<search-status-bar\n  ng-show=\"!isLoading()\"\n  ng-if=\"!isStream\"\n  filter-active=\"!!search.query()\"\n  filter-match-count=\"visibleCount()\"\n  on-clear-selection=\"clearSelection()\"\n  search-query=\"search ? search.query : ''\"\n  selection-count=\"selectedAnnotationCount()\"\n  total-count=\"topLevelThreadCount()\"\n  selected-tab=\"selectedTab\"\n  total-annotations=\"totalAnnotations\"\n  total-notes=\"totalNotes\">\n</search-status-bar>\n\n<div class=\"annotation-unavailable-message\"\n    ng-if=\"selectedAnnotationUnavailable()\">\n  <div class=\"annotation-unavailable-message__icon\"></div>\n  <p class=\"annotation-unavailable-message__label\">\n    <span ng-if=\"auth.status === 'logged-out'\">\n      This annotation is not available.\n      <br>\n      You may need to\n      <a class=\"loggedout-message__link\" href=\"\" ng-click=\"login()\">log in</a>\n      to see it.\n    </span>\n    <span ng-if=\"auth.status === 'logged-in'\">\n      You do not have permission to view this annotation.\n    </span>\n  </p>\n</div>\n\n<span window-scroll=\"loadMore(20)\">\n  <thread-list\n    on-change-collapsed=\"setCollapsed(id, collapsed)\"\n    on-clear-selection=\"clearSelection()\"\n    on-focus=\"focus(annotation)\"\n    on-force-visible=\"forceVisible(thread)\"\n    on-select=\"scrollTo(annotation)\"\n    show-document-info=\"::!isSidebar\"\n    thread=\"rootThread\">\n  </thread-list>\n</span>\n\n<loggedout-message ng-if=\"isSidebar && shouldShowLoggedOutMessage()\"\n  on-login=\"login()\" ng-cloak>\n</loggedout-message>\n";
+module.exports = "<div class=\"sheet\">\n  <i class=\"close h-icon-close\"\n     role=\"button\"\n     title=\"Close\"\n     ng-click=\"vm.onClose()\"></i>\n  <div class=\"form-vertical\">\n    <ul class=\"nav nav-tabs\">\n      <li class=\"active\"><a href=\"\">Share</a></li>\n    </ul>\n    <div class=\"tab-content\">\n      <p>Share the link below to show anyone these annotations and invite them to contribute their own.</p>\n      <p><input class=\"js-via form-input\"\n          type=\"text\"\n          ng-value=\"vm.viaPageLink\"\n          readonly /></p>\n      <p class=\"share-link-icons\">\n      <a href=\"https://twitter.com/intent/tweet?url={{vm.viaPageLink | urlEncode}}&hashtags=annotated\"\n         target=\"_blank\"\n         title=\"Tweet link\"\n         class=\"share-link-icon h-icon-twitter\"></a>\n      <a href=\"https://www.facebook.com/sharer/sharer.php?u={{vm.viaPageLink | urlEncode}}\"\n         target=\"_blank\"\n         title=\"Share on Facebook\"\n         class=\"share-link-icon h-icon-facebook\"></a>\n      <a href=\"https://plus.google.com/share?url={{vm.viaPageLink | urlEncode}}\"\n         target=\"_blank\"\n         title=\"Post on Google Plus\"\n         class=\"share-link-icon h-icon-google-plus\"></a>\n      <a href=\"mailto:?subject=Let's%20Annotate&amp;body={{vm.viaPageLink}}\"\n         title=\"Share via email\"\n         class=\"share-link-icon h-icon-mail\"></a>\n      </p>\n    </div>\n  </div>\n</div>\n";
 
 },{}],116:[function(require,module,exports){
+module.exports = "<div class=\"sheet\" ng-if=\"vm.showSidebarTutorial()\">\n  <i class=\"close h-icon-close\" role=\"button\" title=\"Close\"\n     ng-click=\"vm.dismiss()\"></i>\n  <h1 class=\"sidebar-tutorial__header\">How to get started</h1>\n  <ol class=\"sidebar-tutorial__list\">\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To create an annotation, select text and click the\n        <i class=\"h-icon-annotate\"></i>&nbsp;button.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To add a note to the page you are viewing, click the\n        <i class=\"h-icon-note\"></i>&nbsp;button.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To create a highlight, select text and click the\n        <i class=\"h-icon-highlight\"></i>&nbsp;button.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To reply to an annotation, click the\n        <i class=\"h-icon-annotation-reply\"></i>&nbsp;<strong>Reply</strong>&nbsp;link.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To share an annotated page, click the\n        <i class=\"h-icon-annotation-share\"></i>&nbsp;button at the top.\n      </p>\n    </li>\n    <li class=\"sidebar-tutorial__list-item\">\n      <p class=\"sidebar-tutorial__list-item-content\">\n        To create a private group, select <strong>Public</strong>,\n        open the dropdown, click&nbsp;<strong>+&nbsp;New&nbsp;group</strong>.\n      </p>\n    </li>\n  </ol>\n</div>\n";
+
+},{}],117:[function(require,module,exports){
+module.exports = "<span class=\"ng-cloak\" dropdown keyboard-nav>\n  <button\n    type=\"button\"\n    class=\"top-bar__btn\"\n    dropdown-toggle\n    title=\"Sort by {{sortKey}}\">\n    <i class=\"h-icon-sort\"></i>\n  </button>\n  <div class=\"dropdown-menu__top-arrow\"></div>\n  <ul class=\"dropdown-menu pull-right\" role=\"menu\">\n    <li class=\"dropdown-menu__row\"\n        ng-repeat=\"key in sortKeysAvailable\"\n        ng-click=\"onChangeSortKey({sortKey: key})\"\n        ><span class=\"dropdown-menu-radio\"\n               ng-class=\"{'is-selected' : sortKey === key}\"\n        ></span><a class=\"dropdown-menu__link\" href=\"\">{{key}}</a></li>\n  </ul>\n</span>\n";
+
+},{}],118:[function(require,module,exports){
+module.exports = "<tags-input ng-model=\"vm.tagList\"\n  name=\"tags\"\n  class=\"tags\"\n  placeholder=\"Add tags…\"\n  min-length=\"1\"\n  replace-spaces-with-dashes=\"false\"\n  enable-editing-last-tag=\"true\"\n  on-tag-added=\"vm.onTagsChanged()\"\n  on-tag-removed=\"vm.onTagsChanged()\">\n  <auto-complete source=\"vm.autocomplete($query)\"\n    min-length=\"1\"\n    max-results-to-show=\"10\"></auto-complete>\n</tags-input>\n";
+
+},{}],119:[function(require,module,exports){
+module.exports = "<ul class=\"thread-list\">\n  <li class=\"thread-list__spacer\"\n      ng-style=\"{height: vm.virtualThreadList.offscreenUpperHeight}\"></li>\n  <li id=\"{{child.id}}\"\n      class=\"thread-list__card\"\n      ng-mouseenter=\"vm.onFocus({annotation: child.annotation})\"\n      ng-click=\"vm.onSelect({annotation: child.annotation})\"\n      ng-mouseleave=\"vm.onFocus({annotation: null})\"\n      ng-repeat=\"child in vm.virtualThreadList.visibleThreads track by child.id\">\n      <annotation-thread\n        thread=\"child\"\n        show-document-info=\"vm.showDocumentInfo\"\n        on-change-collapsed=\"vm.onChangeCollapsed({id: id, collapsed: collapsed})\"\n        on-force-visible=\"vm.onForceVisible({thread: thread})\">\n      </annotation-thread>\n  </li>\n  <li class=\"thread-list__spacer\"\n      ng-style=\"{height: vm.virtualThreadList.offscreenLowerHeight}\"></li>\n</ul>\n";
+
+},{}],120:[function(require,module,exports){
+module.exports = "<!-- top bar for the sidebar and the stream.\n!-->\n<div class=\"top-bar\" ng-class=\"frame.visible && 'shown'\" ng-cloak>\n  <!-- Legacy design for top bar, as used in the stream !-->\n  <div class=\"top-bar__inner content\" ng-if=\"::!isSidebar\">\n    <search-input\n      class=\"search-input\"\n      query=\"searchController.query()\"\n      on-search=\"searchController.update($query)\"\n      always-expanded=\"true\">\n    </search-input>\n    <div class=\"top-bar__expander\"></div>\n    <login-control\n      auth=\"auth\"\n      new-style=\"false\"\n      on-show-help-panel=\"onShowHelpPanel()\"\n      on-login=\"onLogin()\"\n      on-logout=\"onLogout()\">\n    </login-control>\n  </div>\n  <!-- New design for the top bar, as used in the sidebar.\n\n       The inner div is styled with 'content' to center it in\n       the stream view.\n  !-->\n  <div class=\"top-bar__inner content\" ng-if=\"::isSidebar\">\n    <group-list class=\"group-list\" auth=\"auth\"></group-list>\n    <div class=\"top-bar__expander\"></div>\n    <a class=\"top-bar__apply-update-btn\"\n       ng-if=\"pendingUpdateCount > 0\"\n       ng-click=\"onApplyPendingUpdates()\"\n       h-tooltip\n       tooltip-direction=\"up\"\n       aria-label=\"Show {{pendingUpdateCount}} new/updated annotation(s)\">\n       <svg-icon class=\"top-bar__apply-icon\" name=\"'refresh'\"></svg-icon>\n    </a>\n    <search-input\n      class=\"search-input\"\n      query=\"searchController.query()\"\n      on-search=\"searchController.update($query)\"\n      title=\"Filter the annotation list\">\n    </search-input>\n    <sort-dropdown\n      sort-keys-available=\"sortKeysAvailable\"\n      sort-key=\"sortKey\"\n      on-change-sort-key=\"onChangeSortKey({sortKey: sortKey})\">\n    </sort-dropdown>\n    <a class=\"top-bar__btn\"\n       ng-click=\"onSharePage()\"\n       title=\"Share this page\">\n      <i class=\"h-icon-annotation-share\"></i>\n    </a>\n    <login-control\n      class=\"login-control\"\n      auth=\"auth\"\n      new-style=\"true\"\n      on-show-help-panel=\"onShowHelpPanel()\"\n      on-login=\"onLogin()\"\n      on-logout=\"onLogout()\">\n    </login-control>\n  </div>\n</div>\n";
+
+},{}],121:[function(require,module,exports){
+module.exports = "<selection-tabs\n  ng-if=\"!search.query() && selectedAnnotationCount() === 0\"\n  is-waiting-to-anchor-annotations=\"waitingToAnchorAnnotations\"\n  is-loading=\"isLoading\"\n  selected-tab=\"selectedTab\"\n  total-annotations=\"totalAnnotations\"\n  total-notes=\"totalNotes\"\n  total-orphans=\"totalOrphans\">\n</selection-tabs>\n\n<search-status-bar\n  ng-show=\"!isLoading()\"\n  ng-if=\"!isStream\"\n  filter-active=\"!!search.query()\"\n  filter-match-count=\"visibleCount()\"\n  on-clear-selection=\"clearSelection()\"\n  search-query=\"search ? search.query : ''\"\n  selection-count=\"selectedAnnotationCount()\"\n  total-count=\"topLevelThreadCount()\"\n  selected-tab=\"selectedTab\"\n  total-annotations=\"totalAnnotations\"\n  total-notes=\"totalNotes\">\n</search-status-bar>\n\n<div class=\"annotation-unavailable-message\"\n    ng-if=\"selectedAnnotationUnavailable()\">\n  <div class=\"annotation-unavailable-message__icon\"></div>\n  <p class=\"annotation-unavailable-message__label\">\n    <span ng-if=\"auth.status === 'logged-out'\">\n      This annotation is not available.\n      <br>\n      You may need to\n      <a class=\"loggedout-message__link\" href=\"\" ng-click=\"login()\">log in</a>\n      to see it.\n    </span>\n    <span ng-if=\"auth.status === 'logged-in'\">\n      You do not have permission to view this annotation.\n    </span>\n  </p>\n</div>\n\n<span window-scroll=\"loadMore(20)\">\n  <thread-list\n    on-change-collapsed=\"setCollapsed(id, collapsed)\"\n    on-clear-selection=\"clearSelection()\"\n    on-focus=\"focus(annotation)\"\n    on-force-visible=\"forceVisible(thread)\"\n    on-select=\"scrollTo(annotation)\"\n    show-document-info=\"::!isSidebar\"\n    thread=\"rootThread\">\n  </thread-list>\n</span>\n\n<loggedout-message ng-if=\"isSidebar && shouldShowLoggedOutMessage()\"\n  on-login=\"login()\" ng-cloak>\n</loggedout-message>\n";
+
+},{}],122:[function(require,module,exports){
 /**
  * @license Angulartics v0.17.2
  * (c) 2013 Luis Farzati http://luisfarzati.github.io/angulartics
@@ -10386,7 +10683,7 @@ angular.module('angulartics', [])
 }]);
 })(angular);
 
-},{}],117:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 /**
  * Autofill event polyfill ##version:1.0.0##
  * (c) 2014 Google, Inc.
@@ -10520,7 +10817,7 @@ angular.module('angulartics', [])
 
 })(window);
 
-},{}],118:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 /*!
  * escape-html
  * Copyright(c) 2012-2013 TJ Holowaychuk
@@ -10600,7 +10897,7 @@ function escapeHtml(string) {
     : html;
 }
 
-},{}],119:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 var hasOwn = Object.prototype.hasOwnProperty;
 var toStr = Object.prototype.toString;
 var undefined;
@@ -10691,7 +10988,7 @@ module.exports = function extend() {
 };
 
 
-},{}],120:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -10716,7 +11013,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],121:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 (function (global){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -11463,7 +11760,7 @@ module.exports = stringToPath;
 
 }).call(this,typeof self !== "undefined" ? self : window)
 
-},{"lodash._basetostring":122}],122:[function(require,module,exports){
+},{"lodash._basetostring":128}],128:[function(require,module,exports){
 (function (global){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -11621,7 +11918,7 @@ module.exports = baseToString;
 
 }).call(this,typeof self !== "undefined" ? self : window)
 
-},{}],123:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 /**
  * lodash 4.0.6 (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -12017,7 +12314,7 @@ function toNumber(value) {
 
 module.exports = debounce;
 
-},{}],124:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 /**
  * lodash (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -12225,7 +12522,7 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-},{"lodash._stringtopath":121}],125:[function(require,module,exports){
+},{"lodash._stringtopath":127}],131:[function(require,module,exports){
 //     uuid.js
 //
 //     Copyright (c) 2010-2012 Robert Kieffer
@@ -12499,7 +12796,7 @@ module.exports = get;
   }
 })('undefined' !== typeof window ? window : null);
 
-},{"crypto":undefined}],126:[function(require,module,exports){
+},{"crypto":undefined}],132:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.7.1
 (function() {
@@ -12536,7 +12833,7 @@ module.exports = get;
 
 }).call(this,require('_process'))
 
-},{"_process":127}],127:[function(require,module,exports){
+},{"_process":133}],133:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -12629,7 +12926,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],128:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 'use strict';
 var strictUriEncode = require('strict-uri-encode');
 
@@ -12697,7 +12994,7 @@ exports.stringify = function (obj) {
 	}).join('&') : '';
 };
 
-},{"strict-uri-encode":147}],129:[function(require,module,exports){
+},{"strict-uri-encode":154}],135:[function(require,module,exports){
 (function (global){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -12774,7 +13071,7 @@ module.exports.polyfill = function() {
 
 }).call(this,typeof self !== "undefined" ? self : window)
 
-},{"performance-now":126}],130:[function(require,module,exports){
+},{"performance-now":132}],136:[function(require,module,exports){
 /**
  * Angular.js plugin
  *
@@ -12783,7 +13080,8 @@ module.exports.polyfill = function() {
 'use strict';
 
 // See https://github.com/angular/angular.js/blob/v1.4.7/src/minErr.js
-var angularPattern = /^\[((?:[$a-zA-Z0-9]+:)?(?:[$a-zA-Z0-9]+))\] (.+?)\n(\S+)$/;
+var angularPattern = /^\[((?:[$a-zA-Z0-9]+:)?(?:[$a-zA-Z0-9]+))\] (.*?)\n?(\S+)$/;
+
 
 function angularPlugin(Raven, angular) {
     angular = angular || window.angular;
@@ -12814,28 +13112,59 @@ function angularPlugin(Raven, angular) {
         .provider('Raven',  RavenProvider)
         .config(['$provide', ExceptionHandlerProvider]);
 
-    Raven.setDataCallback(function(data) {
-        // We only care about mutating an exception
-        var exception = data.exception;
-        if (exception) {
-            exception = exception.values[0];
-            var matches = angularPattern.exec(exception.value);
+    Raven.setDataCallback(function(data, original) {
+        angularPlugin._normalizeData(data);
 
-            if (matches) {
-                // This type now becomes something like: $rootScope:inprog
-                exception.type = matches[1];
-                exception.value = matches[2];
-                data.message = exception.type + ': ' + exception.value;
-                // auto set a new tag specifically for the angular error url
-                data.extra.angularDocs = matches[3].substr(0, 250);
-            }
-        }
+        original && original(data);
     });
 }
 
+angularPlugin._normalizeData = function (data) {
+    // We only care about mutating an exception
+    var exception = data.exception;
+    if (exception) {
+        exception = exception.values[0];
+        var matches = angularPattern.exec(exception.value);
+
+        if (matches) {
+            // This type now becomes something like: $rootScope:inprog
+            exception.type = matches[1];
+            exception.value = matches[2];
+
+            data.message = exception.type + ': ' + exception.value;
+            // auto set a new tag specifically for the angular error url
+            data.extra.angularDocs = matches[3].substr(0, 250);
+        }
+    }
+};
+
 module.exports = angularPlugin;
 
-},{}],131:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+function createThunkMiddleware(extraArgument) {
+  return function (_ref) {
+    var dispatch = _ref.dispatch;
+    var getState = _ref.getState;
+    return function (next) {
+      return function (action) {
+        if (typeof action === 'function') {
+          return action(dispatch, getState, extraArgument);
+        }
+
+        return next(action);
+      };
+    };
+  };
+}
+
+var thunk = createThunkMiddleware();
+thunk.withExtraArgument = createThunkMiddleware;
+
+exports['default'] = thunk;
+},{}],138:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12894,7 +13223,7 @@ function applyMiddleware() {
     };
   };
 }
-},{"./compose":134}],132:[function(require,module,exports){
+},{"./compose":141}],139:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12946,7 +13275,7 @@ function bindActionCreators(actionCreators, dispatch) {
   }
   return boundActionCreators;
 }
-},{}],133:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -13077,7 +13406,7 @@ function combineReducers(reducers) {
 }
 }).call(this,require('_process'))
 
-},{"./createStore":135,"./utils/warning":137,"_process":127,"lodash/isPlainObject":141}],134:[function(require,module,exports){
+},{"./createStore":142,"./utils/warning":144,"_process":133,"lodash/isPlainObject":148}],141:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -13118,7 +13447,7 @@ function compose() {
     if (typeof _ret === "object") return _ret.v;
   }
 }
-},{}],135:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13381,7 +13710,7 @@ function createStore(reducer, initialState, enhancer) {
     replaceReducer: replaceReducer
   }, _ref2[_symbolObservable2["default"]] = observable, _ref2;
 }
-},{"lodash/isPlainObject":141,"symbol-observable":148}],136:[function(require,module,exports){
+},{"lodash/isPlainObject":148,"symbol-observable":155}],143:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -13431,7 +13760,7 @@ exports.applyMiddleware = _applyMiddleware2["default"];
 exports.compose = _compose2["default"];
 }).call(this,require('_process'))
 
-},{"./applyMiddleware":131,"./bindActionCreators":132,"./combineReducers":133,"./compose":134,"./createStore":135,"./utils/warning":137,"_process":127}],137:[function(require,module,exports){
+},{"./applyMiddleware":138,"./bindActionCreators":139,"./combineReducers":140,"./compose":141,"./createStore":142,"./utils/warning":144,"_process":133}],144:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13457,7 +13786,7 @@ function warning(message) {
   } catch (e) {}
   /* eslint-enable no-empty */
 }
-},{}],138:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 /* Built-in method references for those with the same name as other `lodash` methods. */
 var nativeGetPrototype = Object.getPrototypeOf;
 
@@ -13474,7 +13803,7 @@ function getPrototype(value) {
 
 module.exports = getPrototype;
 
-},{}],139:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 /**
  * Checks if `value` is a host object in IE < 9.
  *
@@ -13496,7 +13825,7 @@ function isHostObject(value) {
 
 module.exports = isHostObject;
 
-},{}],140:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -13527,7 +13856,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],141:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 var getPrototype = require('./_getPrototype'),
     isHostObject = require('./_isHostObject'),
     isObjectLike = require('./isObjectLike');
@@ -13599,9 +13928,9 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_getPrototype":138,"./_isHostObject":139,"./isObjectLike":140}],142:[function(require,module,exports){
+},{"./_getPrototype":145,"./_isHostObject":146,"./isObjectLike":147}],149:[function(require,module,exports){
 module.exports = require('./lib/retry');
-},{"./lib/retry":143}],143:[function(require,module,exports){
+},{"./lib/retry":150}],150:[function(require,module,exports){
 var RetryOperation = require('./retry_operation');
 
 exports.operation = function(options) {
@@ -13697,7 +14026,7 @@ exports.wrap = function(obj, options, methods) {
   }
 };
 
-},{"./retry_operation":144}],144:[function(require,module,exports){
+},{"./retry_operation":151}],151:[function(require,module,exports){
 function RetryOperation(timeouts, retryForever) {
   this._timeouts = timeouts;
   this._fn = null;
@@ -13819,7 +14148,7 @@ RetryOperation.prototype.mainError = function() {
   return mainError;
 };
 
-},{}],145:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 var raf = require('raf'),
     COMPLETE = 'complete',
     CANCELED = 'canceled';
@@ -13984,7 +14313,7 @@ module.exports = function(target, settings, callback){
         }
     }
 };
-},{"raf":129}],146:[function(require,module,exports){
+},{"raf":135}],153:[function(require,module,exports){
 (function (process,global){
 (function() {
   "use strict";
@@ -14556,7 +14885,7 @@ module.exports = function(target, settings, callback){
 
 }).call(this,require('_process'),typeof self !== "undefined" ? self : window)
 
-},{"_process":127}],147:[function(require,module,exports){
+},{"_process":133}],154:[function(require,module,exports){
 'use strict';
 module.exports = function (str) {
 	return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
@@ -14564,7 +14893,7 @@ module.exports = function (str) {
 	});
 };
 
-},{}],148:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 (function (global){
 /* global window */
 'use strict';
@@ -14573,7 +14902,7 @@ module.exports = require('./ponyfill')(global || window || this);
 
 }).call(this,typeof self !== "undefined" ? self : window)
 
-},{"./ponyfill":149}],149:[function(require,module,exports){
+},{"./ponyfill":156}],156:[function(require,module,exports){
 'use strict';
 
 module.exports = function symbolObservablePonyfill(root) {
@@ -14594,7 +14923,7 @@ module.exports = function symbolObservablePonyfill(root) {
 	return result;
 };
 
-},{}],150:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 function E () {
 	// Keep this empty so it's easier to inherit from
   // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)

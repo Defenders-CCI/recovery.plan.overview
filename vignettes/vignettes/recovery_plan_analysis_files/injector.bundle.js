@@ -1,306 +1,17 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var AnnotationSync, extend,
-  slice = [].slice;
-
-extend = require('extend');
-
-module.exports = AnnotationSync = (function() {
-  AnnotationSync.prototype.options = {
-    formatter: function(annotation) {
-      return annotation;
-    },
-    parser: function(annotation) {
-      return annotation;
-    },
-    merge: function(local, remote) {
-      var k, v;
-      for (k in remote) {
-        v = remote[k];
-        local[k] = v;
-      }
-      return local;
-    },
-    emit: function() {
-      var args, event;
-      event = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
-      throw new Error('options.emit unspecified for AnnotationSync.');
-    },
-    on: function(event, handler) {
-      throw new Error('options.on unspecified for AnnotationSync.');
-    }
-  };
-
-  AnnotationSync.prototype.cache = null;
-
-  function AnnotationSync(bridge, options) {
-    var event, func, handler, method, onConnect, ref, ref1;
-    this.bridge = bridge;
-    this.options = extend(true, {}, this.options, options);
-    this.cache = {};
-    this._on = this.options.on;
-    this._emit = this.options.emit;
-    ref = this._eventListeners;
-    for (event in ref) {
-      handler = ref[event];
-      this._on(event, handler.bind(this));
-    }
-    ref1 = this._channelListeners;
-    for (method in ref1) {
-      func = ref1[method];
-      this.bridge.on(method, func.bind(this));
-    }
-    onConnect = (function(_this) {
-      return function(channel) {
-        return _this._syncCache(channel);
-      };
-    })(this);
-    this.bridge.onConnect(onConnect);
-  }
-
-  AnnotationSync.prototype.sync = function(annotations) {
-    var a;
-    annotations = (function() {
-      var i, len, results1;
-      results1 = [];
-      for (i = 0, len = annotations.length; i < len; i++) {
-        a = annotations[i];
-        results1.push(this._format(a));
-      }
-      return results1;
-    }).call(this);
-    this.bridge.call('sync', annotations, (function(_this) {
-      return function(err, annotations) {
-        var i, len, results1;
-        if (annotations == null) {
-          annotations = [];
-        }
-        results1 = [];
-        for (i = 0, len = annotations.length; i < len; i++) {
-          a = annotations[i];
-          results1.push(_this._parse(a));
-        }
-        return results1;
-      };
-    })(this));
-    return this;
-  };
-
-  AnnotationSync.prototype._channelListeners = {
-    'beforeCreateAnnotation': function(body, cb) {
-      var annotation;
-      annotation = this._parse(body);
-      delete this.cache[annotation.$$tag];
-      this._emit('beforeAnnotationCreated', annotation);
-      this.cache[annotation.$$tag] = annotation;
-      return cb(null, this._format(annotation));
-    },
-    'createAnnotation': function(body, cb) {
-      var annotation;
-      annotation = this._parse(body);
-      delete this.cache[annotation.$$tag];
-      this._emit('annotationCreated', annotation);
-      this.cache[annotation.$$tag] = annotation;
-      return cb(null, this._format(annotation));
-    },
-    'updateAnnotation': function(body, cb) {
-      var annotation;
-      annotation = this._parse(body);
-      delete this.cache[annotation.$$tag];
-      this._emit('beforeAnnotationUpdated', annotation);
-      this._emit('annotationUpdated', annotation);
-      this.cache[annotation.$$tag] = annotation;
-      return cb(null, this._format(annotation));
-    },
-    'deleteAnnotation': function(body, cb) {
-      var annotation;
-      annotation = this._parse(body);
-      delete this.cache[annotation.$$tag];
-      this._emit('annotationDeleted', annotation);
-      return cb(null, this._format(annotation));
-    },
-    'loadAnnotations': function(bodies, cb) {
-      var a, annotations;
-      annotations = (function() {
-        var i, len, results1;
-        results1 = [];
-        for (i = 0, len = bodies.length; i < len; i++) {
-          a = bodies[i];
-          results1.push(this._parse(a));
-        }
-        return results1;
-      }).call(this);
-      this._emit('annotationsLoaded', annotations);
-      return cb(null, annotations);
-    },
-    'sync': function(bodies, cb) {
-      var annotations, b;
-      annotations = (function() {
-        var i, len, results1;
-        results1 = [];
-        for (i = 0, len = bodies.length; i < len; i++) {
-          b = bodies[i];
-          results1.push(this._format(this._parse(b)));
-        }
-        return results1;
-      }).call(this);
-      this._emit('sync', annotations);
-      return cb(null, annotations);
-    }
-  };
-
-  AnnotationSync.prototype._eventListeners = {
-    'beforeAnnotationCreated': function(annotation) {
-      if (annotation.$$tag != null) {
-        return;
-      }
-      return this._mkCallRemotelyAndParseResults('beforeCreateAnnotation')(annotation);
-    },
-    'annotationCreated': function(annotation) {
-      if (!((annotation.$$tag != null) && this.cache[annotation.$$tag])) {
-        return;
-      }
-      return this._mkCallRemotelyAndParseResults('createAnnotation')(annotation);
-    },
-    'annotationUpdated': function(annotation) {
-      if (!((annotation.$$tag != null) && this.cache[annotation.$$tag])) {
-        return;
-      }
-      return this._mkCallRemotelyAndParseResults('updateAnnotation')(annotation);
-    },
-    'annotationDeleted': function(annotation) {
-      var onFailure;
-      if (!((annotation.$$tag != null) && this.cache[annotation.$$tag])) {
-        return;
-      }
-      onFailure = (function(_this) {
-        return function(err) {
-          if (!err) {
-            return delete _this.cache[annotation.$$tag];
-          }
-        };
-      })(this);
-      return this._mkCallRemotelyAndParseResults('deleteAnnotation', onFailure)(annotation);
-    },
-    'annotationsLoaded': function(annotations) {
-      var a, bodies;
-      bodies = (function() {
-        var i, len, results1;
-        results1 = [];
-        for (i = 0, len = annotations.length; i < len; i++) {
-          a = annotations[i];
-          if (!a.$$tag) {
-            results1.push(this._format(a));
-          }
-        }
-        return results1;
-      }).call(this);
-      if (!bodies.length) {
-        return;
-      }
-      return this.bridge.call('loadAnnotations', bodies);
-    },
-    'annotationsUnloaded': function(annotations) {
-      var self;
-      self = this;
-      return annotations.forEach(function(annotation) {
-        delete self.cache[annotation.$$tag];
-        return self._mkCallRemotelyAndParseResults('deleteAnnotation')(annotation);
-      });
-    }
-  };
-
-  AnnotationSync.prototype._syncCache = function(channel) {
-    var a, annotations, t;
-    annotations = (function() {
-      var ref, results1;
-      ref = this.cache;
-      results1 = [];
-      for (t in ref) {
-        a = ref[t];
-        results1.push(this._format(a));
-      }
-      return results1;
-    }).call(this);
-    if (annotations.length) {
-      return channel.call('loadAnnotations', annotations);
-    }
-  };
-
-  AnnotationSync.prototype._mkCallRemotelyAndParseResults = function(method, callBack) {
-    return (function(_this) {
-      return function(annotation) {
-        var wrappedCallback;
-        wrappedCallback = function(failure, results) {
-          if (failure == null) {
-            _this._parseResults(results);
-          }
-          return typeof callBack === "function" ? callBack(failure, results) : void 0;
-        };
-        return _this.bridge.call(method, _this._format(annotation), wrappedCallback);
-      };
-    })(this);
-  };
-
-  AnnotationSync.prototype._parseResults = function(results) {
-    var bodies, body, i, j, len, len1;
-    for (i = 0, len = results.length; i < len; i++) {
-      bodies = results[i];
-      bodies = [].concat(bodies);
-      for (j = 0, len1 = bodies.length; j < len1; j++) {
-        body = bodies[j];
-        if (body !== null) {
-          this._parse(body);
-        }
-      }
-    }
-  };
-
-  AnnotationSync.prototype._tag = function(ann, tag) {
-    if (ann.$$tag) {
-      return ann;
-    }
-    tag = tag || window.btoa(Math.random());
-    Object.defineProperty(ann, '$$tag', {
-      value: tag
-    });
-    this.cache[tag] = ann;
-    return ann;
-  };
-
-  AnnotationSync.prototype._parse = function(body) {
-    var local, merged, remote;
-    local = this.cache[body.tag];
-    remote = this.options.parser(body.msg);
-    if (local != null) {
-      merged = this.options.merge(local, remote);
-    } else {
-      merged = remote;
-    }
-    return this._tag(merged, body.tag);
-  };
-
-  AnnotationSync.prototype._format = function(ann) {
-    this._tag(ann);
-    return {
-      tag: ann.$$tag,
-      msg: this.options.formatter(ann)
-    };
-  };
-
-  return AnnotationSync;
-
-})();
-
-
-},{"extend":36}],2:[function(require,module,exports){
 module.exports = "<hypothesis-adder-toolbar class=\"annotator-adder js-adder\">\n  <hypothesis-adder-actions class=\"annotator-adder-actions\">\n    <button class=\"annotator-adder-actions__button h-icon-annotate js-annotate-btn\">\n      <span class=\"annotator-adder-actions__label\" data-action=\"comment\">Annotate</span>\n    </button>\n    <button class=\"annotator-adder-actions__button h-icon-highlight js-highlight-btn\">\n      <span class=\"annotator-adder-actions__label\" data-action=\"highlight\">Highlight</span>\n    </button>\n  </hypothesis-adder-actions>\n</hypothesis-adder-toolbar>\n";
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 'use strict';
 
 var classnames = require('classnames');
 
 var template = require('./adder.html');
+
+var ANNOTATE_BTN_CLASS = 'js-annotate-btn';
+var ANNOTATE_BTN_SELECTOR = '.js-annotate-btn';
+
+var HIGHLIGHT_BTN_SELECTOR = '.js-highlight-btn';
 
 /**
  * Show the adder above the selection with an arrow pointing down at the
@@ -393,6 +104,7 @@ function createAdderDOM(container) {
  */
 function Adder(container, options) {
 
+  var self = this;
   var element = createAdderDOM(container);
 
   Object.assign(container.style, {
@@ -400,8 +112,11 @@ function Adder(container, options) {
     // property rather than `display` so that we can compute its size in order to
     // position it before display.
     display: 'block',
-    position: 'absolute',
     visibility: 'hidden',
+
+    // take position out of flow and off screen initially
+    position: 'absolute',
+    top: 0,
 
     // Assign a high Z-index so that the adder shows above any content on the
     // page
@@ -413,22 +128,24 @@ function Adder(container, options) {
   var view = element.ownerDocument.defaultView;
   var enterTimeout;
 
-  element.querySelector('.js-annotate-btn')
-    .addEventListener('click', handleCommand.bind(this, 'annotate'));
-  element.querySelector('.js-highlight-btn')
-    .addEventListener('click', handleCommand.bind(this, 'highlight'));
+  element.querySelector(ANNOTATE_BTN_SELECTOR)
+    .addEventListener('click', handleCommand);
+  element.querySelector(HIGHLIGHT_BTN_SELECTOR)
+    .addEventListener('click', handleCommand);
 
-  function handleCommand(command, event) {
+  function handleCommand(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    if (command === 'annotate') {
+    var isAnnotateCommand = this.classList.contains(ANNOTATE_BTN_CLASS);
+
+    if (isAnnotateCommand) {
       options.onAnnotate();
     } else {
       options.onHighlight();
     }
 
-    this.hide();
+    self.hide();
   }
 
   function width() {
@@ -516,6 +233,14 @@ function Adder(container, options) {
       'annotator-adder--arrow-up': arrowDirection === ARROW_POINTING_UP,
     });
 
+    // Some sites make big assumptions about interactive
+    // elements on the page. Some want to hide interactive elements
+    // after use. So we need to make sure the button stays displayed
+    // the way it was originally displayed - without the inline styles
+    // See: https://github.com/hypothesis/client/issues/137
+    this.element.querySelector(ANNOTATE_BTN_SELECTOR).style.display = '';
+    this.element.querySelector(HIGHLIGHT_BTN_SELECTOR).style.display = '';
+
     Object.assign(container.style, {
       top: toPx(top),
       left: toPx(left),
@@ -536,7 +261,7 @@ module.exports = {
   Adder: Adder,
 };
 
-},{"./adder.html":2,"classnames":29}],4:[function(require,module,exports){
+},{"./adder.html":1,"classnames":30}],3:[function(require,module,exports){
 var FragmentAnchor, RangeAnchor, TextPositionAnchor, TextQuoteAnchor, querySelector, ref;
 
 ref = require('./types'), FragmentAnchor = ref.FragmentAnchor, RangeAnchor = ref.RangeAnchor, TextPositionAnchor = ref.TextPositionAnchor, TextQuoteAnchor = ref.TextQuoteAnchor;
@@ -654,8 +379,8 @@ exports.describe = function(root, range, options) {
 };
 
 
-},{"./types":6}],5:[function(require,module,exports){
-var Annotator, TextPositionAnchor, TextQuoteAnchor, anchorByPosition, findInPages, findPage, getNodeTextLayer, getPage, getPageOffset, getPageTextContent, getSiblingIndex, html, pageTextCache, prioritizePages, quotePositionCache, ref, seek, xpathRange,
+},{"./types":5}],4:[function(require,module,exports){
+var Annotator, RenderingStates, TextPositionAnchor, TextQuoteAnchor, anchorByPosition, findInPages, findPage, getNodeTextLayer, getPage, getPageOffset, getPageTextContent, getSiblingIndex, html, pageTextCache, prioritizePages, quotePositionCache, ref, seek, xpathRange,
   slice = [].slice;
 
 seek = require('dom-seek');
@@ -665,6 +390,8 @@ Annotator = require('annotator');
 xpathRange = Annotator.Range;
 
 html = require('./html');
+
+RenderingStates = require('../pdfjs-rendering-states');
 
 ref = require('./types'), TextPositionAnchor = ref.TextPositionAnchor, TextQuoteAnchor = ref.TextQuoteAnchor;
 
@@ -962,7 +689,7 @@ exports.purgeCache = function() {
 };
 
 
-},{"./html":4,"./types":6,"annotator":28,"dom-seek":35}],6:[function(require,module,exports){
+},{"../pdfjs-rendering-states":13,"./html":3,"./types":5,"annotator":29,"dom-seek":36}],5:[function(require,module,exports){
 var Annotator, RangeAnchor, missingParameter, xpathRange;
 
 Annotator = require('annotator');
@@ -1042,7 +769,160 @@ exports.TextPositionAnchor = require('dom-anchor-text-position');
 exports.TextQuoteAnchor = require('dom-anchor-text-quote');
 
 
-},{"annotator":28,"dom-anchor-fragment":32,"dom-anchor-text-position":33,"dom-anchor-text-quote":34}],7:[function(require,module,exports){
+},{"annotator":29,"dom-anchor-fragment":33,"dom-anchor-text-position":34,"dom-anchor-text-quote":35}],6:[function(require,module,exports){
+var AnnotationSync;
+
+module.exports = AnnotationSync = (function() {
+  AnnotationSync.prototype.cache = null;
+
+  function AnnotationSync(bridge, options) {
+    var event, func, handler, method, ref, ref1;
+    this.bridge = bridge;
+    if (!options.on) {
+      throw new Error('options.on unspecified for AnnotationSync.');
+    }
+    if (!options.emit) {
+      throw new Error('options.emit unspecified for AnnotationSync.');
+    }
+    this.cache = {};
+    this._on = options.on;
+    this._emit = options.emit;
+    ref = this._eventListeners;
+    for (event in ref) {
+      handler = ref[event];
+      this._on(event, handler.bind(this));
+    }
+    ref1 = this._channelListeners;
+    for (method in ref1) {
+      func = ref1[method];
+      this.bridge.on(method, func.bind(this));
+    }
+  }
+
+  AnnotationSync.prototype.sync = function(annotations) {
+    var a;
+    annotations = (function() {
+      var i, len, results1;
+      results1 = [];
+      for (i = 0, len = annotations.length; i < len; i++) {
+        a = annotations[i];
+        results1.push(this._format(a));
+      }
+      return results1;
+    }).call(this);
+    this.bridge.call('sync', annotations, (function(_this) {
+      return function(err, annotations) {
+        var i, len, results1;
+        if (annotations == null) {
+          annotations = [];
+        }
+        results1 = [];
+        for (i = 0, len = annotations.length; i < len; i++) {
+          a = annotations[i];
+          results1.push(_this._parse(a));
+        }
+        return results1;
+      };
+    })(this));
+    return this;
+  };
+
+  AnnotationSync.prototype._channelListeners = {
+    'deleteAnnotation': function(body, cb) {
+      var annotation;
+      annotation = this._parse(body);
+      delete this.cache[annotation.$$tag];
+      this._emit('annotationDeleted', annotation);
+      return cb(null, this._format(annotation));
+    },
+    'loadAnnotations': function(bodies, cb) {
+      var a, annotations;
+      annotations = (function() {
+        var i, len, results1;
+        results1 = [];
+        for (i = 0, len = bodies.length; i < len; i++) {
+          a = bodies[i];
+          results1.push(this._parse(a));
+        }
+        return results1;
+      }).call(this);
+      this._emit('annotationsLoaded', annotations);
+      return cb(null, annotations);
+    }
+  };
+
+  AnnotationSync.prototype._eventListeners = {
+    'beforeAnnotationCreated': function(annotation) {
+      if (annotation.$$tag != null) {
+        return;
+      }
+      return this._mkCallRemotelyAndParseResults('beforeCreateAnnotation')(annotation);
+    }
+  };
+
+  AnnotationSync.prototype._mkCallRemotelyAndParseResults = function(method, callBack) {
+    return (function(_this) {
+      return function(annotation) {
+        var wrappedCallback;
+        wrappedCallback = function(failure, results) {
+          if (failure == null) {
+            _this._parseResults(results);
+          }
+          return typeof callBack === "function" ? callBack(failure, results) : void 0;
+        };
+        return _this.bridge.call(method, _this._format(annotation), wrappedCallback);
+      };
+    })(this);
+  };
+
+  AnnotationSync.prototype._parseResults = function(results) {
+    var bodies, body, i, j, len, len1;
+    for (i = 0, len = results.length; i < len; i++) {
+      bodies = results[i];
+      bodies = [].concat(bodies);
+      for (j = 0, len1 = bodies.length; j < len1; j++) {
+        body = bodies[j];
+        if (body !== null) {
+          this._parse(body);
+        }
+      }
+    }
+  };
+
+  AnnotationSync.prototype._tag = function(ann, tag) {
+    if (ann.$$tag) {
+      return ann;
+    }
+    tag = tag || window.btoa(Math.random());
+    Object.defineProperty(ann, '$$tag', {
+      value: tag
+    });
+    this.cache[tag] = ann;
+    return ann;
+  };
+
+  AnnotationSync.prototype._parse = function(body) {
+    var local, merged, remote;
+    local = this.cache[body.tag];
+    remote = body.msg;
+    merged = Object.assign(local || {}, remote);
+    return this._tag(merged, body.tag);
+  };
+
+  AnnotationSync.prototype._format = function(ann) {
+    this._tag(ann);
+    return {
+      tag: ann.$$tag,
+      msg: ann
+    };
+  };
+
+  return AnnotationSync;
+
+})();
+
+
+},{}],7:[function(require,module,exports){
 'use strict';
 
 var annotationIDs = require('../util/annotation-ids');
@@ -1095,7 +975,7 @@ function config(window_) {
 
 module.exports = config;
 
-},{"../settings":24,"../util/annotation-ids":25}],8:[function(require,module,exports){
+},{"../settings":25,"../util/annotation-ids":26}],8:[function(require,module,exports){
 var $, Annotator, Guest, adder, animationPromise, baseURI, extend, highlighter, normalizeURI, raf, rangeUtil, scrollIntoView, selections,
   extend1 = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty,
@@ -1734,7 +1614,7 @@ module.exports = Guest = (function(superClass) {
 })(Annotator);
 
 
-},{"./adder":3,"./anchoring/html":4,"./highlighter":9,"./range-util":18,"./selections":19,"annotator":28,"document-base-uri":31,"extend":36,"raf":41,"scroll-into-view":42}],9:[function(require,module,exports){
+},{"./adder":2,"./anchoring/html":3,"./highlighter":9,"./range-util":19,"./selections":20,"annotator":29,"document-base-uri":32,"extend":37,"raf":42,"scroll-into-view":43}],9:[function(require,module,exports){
 var $, Annotator;
 
 Annotator = require('annotator');
@@ -1782,7 +1662,7 @@ exports.getBoundingClientRect = function(collection) {
 };
 
 
-},{"annotator":28}],10:[function(require,module,exports){
+},{"annotator":29}],10:[function(require,module,exports){
 var $, Annotator, Guest, Host,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty,
@@ -1837,7 +1717,7 @@ module.exports = Host = (function(superClass) {
 })(Guest);
 
 
-},{"./guest":8,"annotator":28}],11:[function(require,module,exports){
+},{"./guest":8,"annotator":29}],11:[function(require,module,exports){
 'use strict';
 
 require('../polyfills');
@@ -1866,7 +1746,7 @@ require('../vendor/annotator.document');  // Does not export the plugin :(
 
 // Cross-frame communication
 Annotator.Plugin.CrossFrame = require('./plugin/cross-frame');
-Annotator.Plugin.CrossFrame.AnnotationSync = require('../annotation-sync');
+Annotator.Plugin.CrossFrame.AnnotationSync = require('./annotation-sync');
 Annotator.Plugin.CrossFrame.Bridge = require('../bridge');
 Annotator.Plugin.CrossFrame.Discovery = require('../discovery');
 
@@ -1891,7 +1771,7 @@ Annotator.noConflict().$.noConflict(true)(function() {
   });
 });
 
-},{"../annotation-sync":1,"../bridge":21,"../discovery":22,"../polyfills":"/h/static/scripts/polyfills.js","../vendor/annotator.document":27,"./config":7,"./guest":8,"./host":10,"./pdf-sidebar":12,"./plugin/bucket-bar":13,"./plugin/cross-frame":14,"./plugin/pdf":16,"./plugin/toolbar":17,"./sidebar":20,"annotator":28}],12:[function(require,module,exports){
+},{"../bridge":22,"../discovery":23,"../polyfills":"/h/static/scripts/polyfills.js","../vendor/annotator.document":28,"./annotation-sync":6,"./config":7,"./guest":8,"./host":10,"./pdf-sidebar":12,"./plugin/bucket-bar":14,"./plugin/cross-frame":15,"./plugin/pdf":17,"./plugin/toolbar":18,"./sidebar":21,"annotator":29}],12:[function(require,module,exports){
 var PdfSidebar, Sidebar,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
@@ -1922,7 +1802,26 @@ module.exports = PdfSidebar = (function(superClass) {
 })(Sidebar);
 
 
-},{"./sidebar":20}],13:[function(require,module,exports){
+},{"./sidebar":21}],13:[function(require,module,exports){
+'use strict';
+
+/**
+ * Enum values for page rendering states (IRenderableView#renderingState)
+ * in PDF.js. Taken from web/pdf_rendering_queue.js in the PDF.js library.
+ *
+ * Reproduced here because this enum is not exported consistently across
+ * different versions of PDF.js
+ */
+var RenderingStates = {
+  INITIAL: 0,
+  RUNNING: 1,
+  PAUSED: 2,
+  FINISHED: 3,
+};
+
+module.exports = RenderingStates;
+
+},{}],14:[function(require,module,exports){
 var $, Annotator, BUCKET_NAV_SIZE, BUCKET_SIZE, BUCKET_TOP_THRESHOLD, BucketBar, highlighter, raf, scrollIntoView, scrollToClosest,
   bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -2254,7 +2153,7 @@ BucketBar.BUCKET_NAV_SIZE = BUCKET_NAV_SIZE;
 BucketBar.BUCKET_TOP_THRESHOLD = BUCKET_TOP_THRESHOLD;
 
 
-},{"../highlighter":9,"annotator":28,"raf":41,"scroll-into-view":42}],14:[function(require,module,exports){
+},{"../highlighter":9,"annotator":29,"raf":42,"scroll-into-view":43}],15:[function(require,module,exports){
 var Annotator, CrossFrame, extract,
   slice = [].slice,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -2284,7 +2183,7 @@ module.exports = CrossFrame = (function(superClass) {
     opts = extract(options, 'server');
     discovery = new CrossFrame.Discovery(window, opts);
     bridge = new CrossFrame.Bridge();
-    opts = extract(options, 'on', 'emit', 'formatter', 'parser');
+    opts = extract(options, 'on', 'emit');
     annotationSync = new CrossFrame.AnnotationSync(bridge, opts);
     this.pluginInit = function() {
       var onDiscoveryCallback;
@@ -2319,7 +2218,7 @@ module.exports = CrossFrame = (function(superClass) {
 })(Annotator.Plugin);
 
 
-},{"annotator":28}],15:[function(require,module,exports){
+},{"annotator":29}],16:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2408,8 +2307,8 @@ function getPDFURL(app) {
 
 module.exports = PDFMetadata;
 
-},{}],16:[function(require,module,exports){
-var Annotator, PDF, extend,
+},{}],17:[function(require,module,exports){
+var Annotator, PDF, RenderingStates, extend,
   extend1 = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -2417,6 +2316,8 @@ var Annotator, PDF, extend,
 extend = require('extend');
 
 Annotator = require('annotator');
+
+RenderingStates = require('../pdfjs-rendering-states');
 
 module.exports = PDF = (function(superClass) {
   extend1(PDF, superClass);
@@ -2518,7 +2419,7 @@ module.exports = PDF = (function(superClass) {
 })(Annotator.Plugin);
 
 
-},{"../anchoring/pdf":5,"./pdf-metadata":15,"annotator":28,"extend":36}],17:[function(require,module,exports){
+},{"../anchoring/pdf":4,"../pdfjs-rendering-states":13,"./pdf-metadata":16,"annotator":29,"extend":37}],18:[function(require,module,exports){
 var $, Annotator, Toolbar, makeButton,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
@@ -2640,7 +2541,7 @@ module.exports = Toolbar = (function(superClass) {
 })(Annotator.Plugin);
 
 
-},{"annotator":28}],18:[function(require,module,exports){
+},{"annotator":29}],19:[function(require,module,exports){
 'use strict';
 
 function translate(rect, x, y) {
@@ -2792,7 +2693,7 @@ module.exports = {
   selectionFocusRect: selectionFocusRect,
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var observable = require('../util/observable');
@@ -2855,7 +2756,7 @@ function selections(document) {
 
 module.exports = selections;
 
-},{"../util/observable":26}],20:[function(require,module,exports){
+},{"../util/observable":27}],21:[function(require,module,exports){
 var Hammer, Host, MIN_RESIZE, Sidebar, extend, raf,
   bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   extend1 = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -3056,7 +2957,7 @@ module.exports = Sidebar = (function(superClass) {
 })(Host);
 
 
-},{"./host":10,"extend":36,"hammerjs":37,"raf":41}],21:[function(require,module,exports){
+},{"./host":10,"extend":37,"hammerjs":38,"raf":42}],22:[function(require,module,exports){
 var Bridge, RPC, extend,
   slice = [].slice;
 
@@ -3214,7 +3115,7 @@ module.exports = Bridge = (function() {
 })();
 
 
-},{"./frame-rpc":23,"extend":36}],22:[function(require,module,exports){
+},{"./frame-rpc":24,"extend":37}],23:[function(require,module,exports){
 var Discovery,
   bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
@@ -3335,7 +3236,7 @@ module.exports = Discovery = (function() {
 })();
 
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 /* eslint-disable */
@@ -3451,7 +3352,7 @@ RPC.prototype._handle = function (msg) {
     }
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3482,7 +3383,7 @@ function settings(document, settingsClass) {
 
 module.exports = settings;
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3511,7 +3412,7 @@ module.exports = {
   extractIDFromURL: extractIDFromURL,
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3642,7 +3543,7 @@ module.exports = {
   Observable: Observable,
 };
 
-},{"zen-observable":43}],27:[function(require,module,exports){
+},{"zen-observable":44}],28:[function(require,module,exports){
 
 /*
 ** Annotator v1.2.10-dev-6536160
@@ -3928,7 +3829,7 @@ module.exports = {
 
 //
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 (function (global){
 
 ; jQuery = global.jQuery = require("jquery");
@@ -5887,7 +5788,7 @@ module.exports = {
 
 }).call(this,typeof self !== "undefined" ? self : window)
 
-},{"jquery":"jquery"}],29:[function(require,module,exports){
+},{"jquery":"jquery"}],30:[function(require,module,exports){
 /*!
   Copyright (c) 2016 Jed Watson.
   Licensed under the MIT License (MIT), see
@@ -5937,7 +5838,7 @@ module.exports = {
 	}
 }());
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict'
 
 /**
@@ -8132,7 +8033,7 @@ module.exports['DIFF_DELETE'] = DIFF_DELETE;
 module.exports['DIFF_INSERT'] = DIFF_INSERT;
 module.exports['DIFF_EQUAL'] = DIFF_EQUAL;
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 // https://html.spec.whatwg.org/multipage/infrastructure.html#document-base-url
 module.exports = (function () {
   var baseURI = document.baseURI;
@@ -8150,7 +8051,7 @@ module.exports = (function () {
   return (baseURI || document.documentURI);
 })();
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -8244,7 +8145,7 @@ var FragmentAnchor = (function () {
 exports['default'] = FragmentAnchor;
 module.exports = exports['default'];
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -8400,7 +8301,7 @@ var TextPositionAnchor = (function () {
 exports['default'] = TextPositionAnchor;
 module.exports = exports['default'];
 
-},{"dom-seek":35,"node-iterator-shim":38}],34:[function(require,module,exports){
+},{"dom-seek":36,"node-iterator-shim":39}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -8565,7 +8466,7 @@ var TextQuoteAnchor = (function () {
 exports['default'] = TextQuoteAnchor;
 module.exports = exports['default'];
 
-},{"diff-match-patch":30,"dom-anchor-text-position":33}],35:[function(require,module,exports){
+},{"diff-match-patch":31,"dom-anchor-text-position":34}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -8634,7 +8535,7 @@ function after(ref, node) {
 }
 module.exports = exports['default'];
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var hasOwn = Object.prototype.hasOwnProperty;
 var toStr = Object.prototype.toString;
 var undefined;
@@ -8725,7 +8626,7 @@ module.exports = function extend() {
 };
 
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 (function (global){
 ; var __browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 /*! Hammer.JS - v2.0.6 - 2015-12-23
@@ -11303,7 +11204,7 @@ if (typeof define === 'function' && define.amd) {
 
 }).call(this,typeof self !== "undefined" ? self : window)
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -11389,7 +11290,7 @@ function shim(iter, root) {
 }
 module.exports = exports['default'];
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.7.1
 (function() {
@@ -11426,7 +11327,7 @@ module.exports = exports['default'];
 
 }).call(this,require('_process'))
 
-},{"_process":40}],40:[function(require,module,exports){
+},{"_process":41}],41:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -11519,7 +11420,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 (function (global){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -11596,7 +11497,7 @@ module.exports.polyfill = function() {
 
 }).call(this,typeof self !== "undefined" ? self : window)
 
-},{"performance-now":39}],42:[function(require,module,exports){
+},{"performance-now":40}],43:[function(require,module,exports){
 var raf = require('raf'),
     COMPLETE = 'complete',
     CANCELED = 'canceled';
@@ -11761,10 +11662,10 @@ module.exports = function(target, settings, callback){
         }
     }
 };
-},{"raf":41}],43:[function(require,module,exports){
+},{"raf":42}],44:[function(require,module,exports){
 module.exports = require("./zen-observable.js").Observable;
 
-},{"./zen-observable.js":44}],44:[function(require,module,exports){
+},{"./zen-observable.js":45}],45:[function(require,module,exports){
 'use strict'; (function(fn, name) { if (typeof exports !== 'undefined') fn(exports, module); else if (typeof self !== 'undefined') fn(name === '*' ? self : (name ? self[name] = {} : {})); })(function(exports, module) { // === Symbol Support ===
 
 function hasSymbol(name) {

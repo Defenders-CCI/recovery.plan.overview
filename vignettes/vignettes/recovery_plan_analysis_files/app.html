@@ -20,7 +20,7 @@
     
   </head>
   <body ng-csp="">
-    <hypothesis-app class="ng-scope ng-isolate-scope"><top-bar auth="auth" on-login="login()" on-logout="logout()" on-share-page="share()" on-show-help-panel="helpPanel.visible = true" is-sidebar="::isSidebar" search-controller="search" sort-key="sortKey()" sort-keys-available="sortKeysAvailable()" on-change-sort-key="setSortKey(sortKey)" class="ng-isolate-scope"><!-- top bar for the sidebar and the stream.
+    <hypothesis-app class="ng-scope ng-isolate-scope"><top-bar auth="auth" on-login="login()" on-logout="logout()" on-share-page="share()" on-show-help-panel="helpPanel.visible = true" is-sidebar="::isSidebar" pending-update-count="countPendingUpdates()" on-apply-pending-updates="applyPendingUpdates()" search-controller="search" sort-key="sortKey()" sort-keys-available="sortKeysAvailable()" on-change-sort-key="setSortKey(sortKey)" class="ng-isolate-scope"><!-- top bar for the sidebar and the stream.
 !-->
 <div class="top-bar" ng-class="frame.visible &amp;&amp; &#39;shown&#39;">
   <!-- Legacy design for top bar, as used in the stream !-->
@@ -31,153 +31,16 @@
        the stream view.
   !-->
   <!-- ngIf: ::isSidebar --><div class="top-bar__inner content ng-scope" ng-if="::isSidebar">
-    <group-list class="group-list ng-isolate-scope" auth="auth"><!-- ngIf: auth.status === 'logged-out' -->
+    <group-list class="group-list ng-isolate-scope" auth="auth"><!-- ngIf: auth.status === 'logged-out' --><span ng-if="auth.status === &#39;logged-out&#39;" ng-switch="" on="groups.focused().public" class="ng-scope">
+  <!-- ngSwitchWhen: true --><i class="group-list-label__icon h-icon-public ng-scope" ng-switch-when="true"></i><!-- end ngSwitchWhen: --><!-- nospace
+  !--><!-- ngSwitchDefault: -->
+  <span class="group-list-label__label ng-binding">Public</span>
+</span><!-- end ngIf: auth.status === 'logged-out' -->
 
-<!-- ngIf: auth.status === 'logged-in' --><div class="pull-right ng-scope dropdown" ng-if="auth.status === &#39;logged-in&#39;" dropdown="" keyboard-nav="">
-  <div class="dropdown-toggle" dropdown-toggle="" data-toggle="dropdown" role="button" ng-switch="" on="groups.focused().public" title="Change the selected group" aria-haspopup="true" aria-expanded="false">
-    <!-- ngSwitchWhen: true --><i class="group-list-label__icon h-icon-public ng-scope" ng-switch-when="true"></i><!-- end ngSwitchWhen: --><!-- nospace
-    !--><!-- ngSwitchDefault: -->
-    <span class="group-list-label__label ng-binding">Public</span><!-- nospace
-    !--><i class="h-icon-arrow-drop-down"></i>
-  </div>
-  <div class="dropdown-menu__top-arrow"></div>
-  <ul class="dropdown-menu pull-none" role="menu">
-    <!-- ngRepeat: group in groups.all() --><li class="dropdown-menu__row dropdown-menu__row--unpadded  ng-scope" ng-repeat="group in groups.all()">
-      <div ng-class="{&#39;group-item&#39;: true, selected: group.id == groups.focused().id}" ng-click="focusGroup(group.id)" class="group-item selected">
-        <!-- the group icon !-->
-        <div class="group-icon-container" ng-switch="" on="group.public">
-          <!-- ngSwitchWhen: true --><i class="h-icon-public ng-scope" ng-switch-when="true"></i><!-- end ngSwitchWhen: -->
-          <!-- ngSwitchDefault: -->
-        </div>
-        <!-- the group name and share link !-->
-        <div class="group-details">
-          <div class="group-name-container">
-            <a class="group-name-link ng-binding" href="https://hypothes.is/" title="Show public annotations">
-               Public
-            </a>
-          </div>
-          <!-- ngIf: !group.public -->
-        </div>
-        <!-- the 'Leave group' icon !-->
-        <div class="group-cancel-icon-container" ng-click="$event.stopPropagation()">
-          <!-- ngIf: !group.public -->
-        </div>
-      </div>
-    </li><!-- end ngRepeat: group in groups.all() --><li class="dropdown-menu__row dropdown-menu__row--unpadded  ng-scope" ng-repeat="group in groups.all()">
-      <div ng-class="{&#39;group-item&#39;: true, selected: group.id == groups.focused().id}" ng-click="focusGroup(group.id)" class="group-item">
-        <!-- the group icon !-->
-        <div class="group-icon-container" ng-switch="" on="group.public">
-          <!-- ngSwitchWhen: true -->
-          <!-- ngSwitchDefault: --><i class="h-icon-group ng-scope" ng-switch-default=""></i><!-- end ngSwitchWhen: -->
-        </div>
-        <!-- the group name and share link !-->
-        <div class="group-details">
-          <div class="group-name-container">
-            <a class="group-name-link ng-binding" href="https://hypothes.is/" title="Show and create annotations in ESC computing">
-               ESC computing
-            </a>
-          </div>
-          <!-- ngIf: !group.public --><div class="share-link-container ng-scope" ng-click="$event.stopPropagation()" ng-if="!group.public">
-            <a class="share-link" href="https://hypothes.is/groups/JPij2ki7/esc-computing" target="_blank">
-              View group activity and invite others
-            </a>
-          </div><!-- end ngIf: !group.public -->
-        </div>
-        <!-- the 'Leave group' icon !-->
-        <div class="group-cancel-icon-container" ng-click="$event.stopPropagation()">
-          <!-- ngIf: !group.public --><i class="h-icon-cancel-outline btn--cancel ng-scope" ng-if="!group.public" ng-click="leaveGroup(group.id)" title="Leave &#39;ESC computing&#39;"></i><!-- end ngIf: !group.public -->
-        </div>
-      </div>
-    </li><!-- end ngRepeat: group in groups.all() --><li class="dropdown-menu__row dropdown-menu__row--unpadded  ng-scope" ng-repeat="group in groups.all()">
-      <div ng-class="{&#39;group-item&#39;: true, selected: group.id == groups.focused().id}" ng-click="focusGroup(group.id)" class="group-item">
-        <!-- the group icon !-->
-        <div class="group-icon-container" ng-switch="" on="group.public">
-          <!-- ngSwitchWhen: true -->
-          <!-- ngSwitchDefault: --><i class="h-icon-group ng-scope" ng-switch-default=""></i><!-- end ngSwitchWhen: -->
-        </div>
-        <!-- the group name and share link !-->
-        <div class="group-details">
-          <div class="group-name-container">
-            <a class="group-name-link ng-binding" href="https://hypothes.is/" title="Show and create annotations in HCP rev comment group">
-               HCP rev comment group
-            </a>
-          </div>
-          <!-- ngIf: !group.public --><div class="share-link-container ng-scope" ng-click="$event.stopPropagation()" ng-if="!group.public">
-            <a class="share-link" href="https://hypothes.is/groups/aJDq4mNZ/hcp-rev-comment-group" target="_blank">
-              View group activity and invite others
-            </a>
-          </div><!-- end ngIf: !group.public -->
-        </div>
-        <!-- the 'Leave group' icon !-->
-        <div class="group-cancel-icon-container" ng-click="$event.stopPropagation()">
-          <!-- ngIf: !group.public --><i class="h-icon-cancel-outline btn--cancel ng-scope" ng-if="!group.public" ng-click="leaveGroup(group.id)" title="Leave &#39;HCP rev comment group&#39;"></i><!-- end ngIf: !group.public -->
-        </div>
-      </div>
-    </li><!-- end ngRepeat: group in groups.all() --><li class="dropdown-menu__row dropdown-menu__row--unpadded  ng-scope" ng-repeat="group in groups.all()">
-      <div ng-class="{&#39;group-item&#39;: true, selected: group.id == groups.focused().id}" ng-click="focusGroup(group.id)" class="group-item">
-        <!-- the group icon !-->
-        <div class="group-icon-container" ng-switch="" on="group.public">
-          <!-- ngSwitchWhen: true -->
-          <!-- ngSwitchDefault: --><i class="h-icon-group ng-scope" ng-switch-default=""></i><!-- end ngSwitchWhen: -->
-        </div>
-        <!-- the group name and share link !-->
-        <div class="group-details">
-          <div class="group-name-container">
-            <a class="group-name-link ng-binding" href="https://hypothes.is/" title="Show and create annotations in JWM_notes">
-               JWM_notes
-            </a>
-          </div>
-          <!-- ngIf: !group.public --><div class="share-link-container ng-scope" ng-click="$event.stopPropagation()" ng-if="!group.public">
-            <a class="share-link" href="https://hypothes.is/groups/1xGkM72B/jwm-notes" target="_blank">
-              View group activity and invite others
-            </a>
-          </div><!-- end ngIf: !group.public -->
-        </div>
-        <!-- the 'Leave group' icon !-->
-        <div class="group-cancel-icon-container" ng-click="$event.stopPropagation()">
-          <!-- ngIf: !group.public --><i class="h-icon-cancel-outline btn--cancel ng-scope" ng-if="!group.public" ng-click="leaveGroup(group.id)" title="Leave &#39;JWM_notes&#39;"></i><!-- end ngIf: !group.public -->
-        </div>
-      </div>
-    </li><!-- end ngRepeat: group in groups.all() --><li class="dropdown-menu__row dropdown-menu__row--unpadded  ng-scope" ng-repeat="group in groups.all()">
-      <div ng-class="{&#39;group-item&#39;: true, selected: group.id == groups.focused().id}" ng-click="focusGroup(group.id)" class="group-item">
-        <!-- the group icon !-->
-        <div class="group-icon-container" ng-switch="" on="group.public">
-          <!-- ngSwitchWhen: true -->
-          <!-- ngSwitchDefault: --><i class="h-icon-group ng-scope" ng-switch-default=""></i><!-- end ngSwitchWhen: -->
-        </div>
-        <!-- the group name and share link !-->
-        <div class="group-details">
-          <div class="group-name-container">
-            <a class="group-name-link ng-binding" href="https://hypothes.is/" title="Show and create annotations in test ESC work paper">
-               test ESC work paper
-            </a>
-          </div>
-          <!-- ngIf: !group.public --><div class="share-link-container ng-scope" ng-click="$event.stopPropagation()" ng-if="!group.public">
-            <a class="share-link" href="https://hypothes.is/groups/2YwdyB94/test-esc-work-paper" target="_blank">
-              View group activity and invite others
-            </a>
-          </div><!-- end ngIf: !group.public -->
-        </div>
-        <!-- the 'Leave group' icon !-->
-        <div class="group-cancel-icon-container" ng-click="$event.stopPropagation()">
-          <!-- ngIf: !group.public --><i class="h-icon-cancel-outline btn--cancel ng-scope" ng-if="!group.public" ng-click="leaveGroup(group.id)" title="Leave &#39;test ESC work paper&#39;"></i><!-- end ngIf: !group.public -->
-        </div>
-      </div>
-    </li><!-- end ngRepeat: group in groups.all() -->
-    <li class="dropdown-menu__row dropdown-menu__row--unpadded new-group-btn">
-      <div class="group-item" ng-click="createNewGroup()">
-        <div class="group-icon-container"><i class="h-icon-add"></i></div>
-        <div class="group-details">
-          <a href="https://hypothes.is/" class="group-name-link" title="Create a new group to share annotations">
-            New group
-          </a>
-        </div>
-      </div>
-    </li>
-  </ul>
-</div><!-- end ngIf: auth.status === 'logged-in' -->
+<!-- ngIf: auth.status === 'logged-in' -->
 </group-list>
     <div class="top-bar__expander"></div>
+    <!-- ngIf: pendingUpdateCount > 0 -->
     <search-input class="search-input ng-isolate-scope" query="searchController.query()" on-search="searchController.update($query)" title="Filter the annotation list"><form class="simple-search-form ng-pristine ng-valid simple-search-inactive" name="searchForm" ng-class="!vm.query &amp;&amp; &#39;simple-search-inactive&#39;">
   <input class="simple-search-input" type="text" name="query" placeholder="Search…" ng-disabled="vm.loading" ng-class="vm.inputClasses()">
   <button type="button" class="simple-search-icon top-bar__btn" ng-hide="vm.loading">
@@ -203,25 +66,22 @@
     </a>
     <login-control class="login-control ng-isolate-scope" auth="auth" new-style="true" on-show-help-panel="onShowHelpPanel()" on-login="onLogin()" on-logout="onLogout()"><!-- New controls -->
 <!-- ngIf: vm.newStyle && vm.auth.status === 'unknown' -->
-<!-- ngIf: vm.newStyle && vm.auth.status === 'logged-out' -->
+<!-- ngIf: vm.newStyle && vm.auth.status === 'logged-out' --><span class="login-text ng-scope" ng-if="vm.newStyle &amp;&amp; vm.auth.status === &#39;logged-out&#39;">
+  <a href="https://hypothes.is/signup" target="_blank">Sign up</a>
+  / <a href="https://hypothes.is/" ng-click="vm.onLogin()">Log in</a>
+</span><!-- end ngIf: vm.newStyle && vm.auth.status === 'logged-out' -->
 <!-- ngIf: vm.newStyle --><div ng-if="vm.newStyle" class="pull-right login-control-menu ng-scope dropdown" dropdown="" keyboard-nav="">
-  <a role="button" class="top-bar__btn dropdown-toggle" data-toggle="dropdown" dropdown-toggle="" title="jacobogre" aria-haspopup="true" aria-expanded="false">
-    <!-- ngIf: vm.auth.status === 'logged-in' --><i class="h-icon-account ng-scope" ng-if="vm.auth.status === &#39;logged-in&#39;"></i><!-- end ngIf: vm.auth.status === 'logged-in' --><!--
+  <a role="button" class="top-bar__btn dropdown-toggle" data-toggle="dropdown" dropdown-toggle="" title="" aria-haspopup="true" aria-expanded="false">
+    <!-- ngIf: vm.auth.status === 'logged-in' --><!--
     !--><i class="h-icon-arrow-drop-down top-bar__dropdown-arrow"></i>
   </a>
   <ul class="dropdown-menu pull-right" role="menu">
-    <!-- ngIf: vm.auth.status === 'logged-in' --><li class="dropdown-menu__row ng-scope" ng-if="vm.auth.status === &#39;logged-in&#39;">
-      <a href="https://hypothes.is/u/jacobogre" class="dropdown-menu__link ng-binding" title="View all your annotations" target="_blank">jacobogre</a>
-    </li><!-- end ngIf: vm.auth.status === 'logged-in' -->
-    <!-- ngIf: vm.auth.status === 'logged-in' --><li class="dropdown-menu__row ng-scope" ng-if="vm.auth.status === &#39;logged-in&#39;">
-      <a class="dropdown-menu__link" href="https://hypothes.is/account/settings" target="_blank">Account settings</a>
-    </li><!-- end ngIf: vm.auth.status === 'logged-in' -->
+    <!-- ngIf: vm.auth.status === 'logged-in' -->
+    <!-- ngIf: vm.auth.status === 'logged-in' -->
     <li class="dropdown-menu__row">
       <a class="dropdown-menu__link" ng-click="vm.onShowHelpPanel()">Help</a>
     </li>
-    <!-- ngIf: vm.auth.status === 'logged-in' --><li class="dropdown-menu__row ng-scope" ng-if="vm.auth.status === &#39;logged-in&#39;">
-      <a class="dropdown-menu__link dropdown-menu__link--subtle" href="https://hypothes.is/" ng-click="vm.onLogout()">Log out</a>
-    </li><!-- end ngIf: vm.auth.status === 'logged-in' -->
+    <!-- ngIf: vm.auth.status === 'logged-in' -->
   </ul>
 </div><!-- end ngIf: vm.newStyle -->
 
@@ -234,7 +94,13 @@
 </div>
 </top-bar>
 
-<!-- ngIf: isSidebar && auth.status === 'logged-out' -->
+<!-- ngIf: isSidebar && auth.status === 'logged-out' --><div class="create-account-banner ng-scope" ng-if="isSidebar &amp;&amp; auth.status === &#39;logged-out&#39;">
+  To annotate this document
+  <a href="https://hypothes.is/signup" target="_blank">
+    create a free account
+  </a>
+  or <a href="https://hypothes.is/" ng-click="login()">log in</a>
+</div><!-- end ngIf: isSidebar && auth.status === 'logged-out' -->
 
 <div class="content">
   <!-- ngIf: accountDialog.visible -->
@@ -289,7 +155,7 @@
 
     <!-- App Configuration !-->
     <script class="js-hypothesis-settings" type="application/json">
-      {"release": "20160913+g23c4e6d", "websocketUrl": "wss://hypothes.is/ws", "apiUrl": "https://hypothes.is/api/", "serviceUrl": "https://hypothes.is/", "raven": {"dsn": "//934d4f62912b47d8bb03c28ae6670cf8@app.getsentry.com/69811", "release": "20160913+g23c4e6d"}}
+      {"release": "20161020+g2793320", "websocketUrl": "wss://hypothes.is/ws", "apiUrl": "https://hypothes.is/api/", "serviceUrl": "https://hypothes.is/", "raven": {"dsn": "//934d4f62912b47d8bb03c28ae6670cf8@app.getsentry.com/69811", "release": "20161020+g2793320"}}
     </script>
 
     <!-- Scripts !-->
@@ -306,13 +172,13 @@
     
     <script src="./unorm.bundle.js"></script>
     
-    <script src="./app.bundle.js"></script>
+    <script src="./app.bundle.js"></script><div class="tooltip" style="visibility: hidden;"><span class="tooltip-label js-tooltip-label"></span></div>
     
 
     <!-- Analytics !-->
     
       <!-- Google Analytics -->
-      <script async="" src="https://www.google-analytics.com/analytics.js"></script>
+      <script async="" src="./analytics.js"></script>
       <script>
        window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
        ga('create', 'UA-26026798-1', 'auto');
