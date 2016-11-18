@@ -183,6 +183,11 @@ kable(to_show_df,
       caption = "Summary statistics of time between listing and final recovery plan. Min, median, mean, and max are given in days.",
       digits = 1,
       align = "c")
+# write.table(data.frame(to_show_df), 
+#             file = "vignettes/summary_stats.tsv",
+#             row.names = TRUE,
+#             sep = "\t",
+#             quote = FALSE)
 ```
 
 ## Plans by region and agency
